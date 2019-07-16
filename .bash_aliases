@@ -1,0 +1,6 @@
+alias sudo='sudo -E'
+alias vim='nvim'
+alias ovim='vim'
+alias jenv='pyenv global anaconda3-5.3.1'
+alias senv='pyenv global system'
+alias jt='jupyter-notebook &'

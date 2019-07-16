@@ -1,0 +1,52 @@
+# configurations by customizer
+
+# shell variables definition
+SORTTYPE=1
+DISPLAYMODE=3
+ADJTTY=1
+ANSICOLOR=1
+TMPDIR=/home/moto
+TMPUMASK=077
+LANGUAGE=C.UTF-8
+DEFKCODE=utf8-iconv
+INPUTKCODE=C.UTF-8
+PTYINKCODE=utf8-iconv
+PTYOUTKCODE=utf8-iconv
+FNAMEKCODE=C.UTF-8
+URLKCODE=utf8-iconv
+EDITOR=nvim
+SHELL=/bin/bash
+
+# launcher definition
+launch .zip	"unzip -lqq"	-f " %s %m-%d-%y %t %*f"
+launch .Z	"zcat %C|"
+launch .gz	"gzip -cd %C|"
+launch .bz2	"bzip2 -cd %C|"
+launch .deb	"ar p %C data.tar.gz|gzip -dc|tar tvf - "	-f "%a %u/%g %s %y-%m-%d %t %f"
+launch .rpm	"rpm2cpio %C|cpio -tv"	-f "%a %x %u %g %s %m %d %y %f"
+
+# archiver definition
+arch .zip	"zip -q %C %TA"	"unzip -q %C %TA"
+arch .deb	"clear; echo ERROR; false"	"ar p %C data.tar.gz|gzip -dc|tar -xf - %TA"
+arch .rpm	"clear; echo ERROR; false"	"rpm2cpio %C|cpio -id %TA"
+
+# additional configurations by customizer
+
+# shell variables definition
+EDITMODE=emacs
+
+# additional configurations by customizer
+
+# shell variables definition
+PS1="\[\e]0;\u@\h: \w\a\]\${debian_chroot:+(\$debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\\$ "
+
+# key bind definition
+bind n	"touch newfile"
+
+# additional configurations by customizer
+
+# key bind definition
+bind h	CUR_LEFT
+bind k	CUR_UP
+bind l	CUR_RIGHT
+bind j	CUR_DOWN
