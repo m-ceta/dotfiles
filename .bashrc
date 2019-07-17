@@ -115,3 +115,8 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
+# WSL
+if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
+  export DISPLAY=:0.0
+fi
