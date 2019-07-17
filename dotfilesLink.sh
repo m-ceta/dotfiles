@@ -1,0 +1,8 @@
+#/bin/sh
+ln -sf ~/dotfiles/.bash_aliases ~/.bash_aliases
+ln -sf ~/dotfiles/.bash_logout ~/.bash_logout
+ln -sf ~/dotfiles/.bashrc ~/.bashrc
+ln -sf ~/dotfiles/.fd2rc ~/.fd2rc
+ln -sf ~/dotfiles/.profile ~/.profile
+ln -sf ~/dotfiles/nvim ~/.config
+
