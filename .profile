@@ -10,28 +10,30 @@
 
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
-    # include .bashrc if it exists
-    if [ -f "$HOME/.bashrc" ]; then
-	. "$HOME/.bashrc"
-    fi
+  # include .bashrc if it exists
+  if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+  fi
 fi
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
+  PATH="$HOME/bin:$PATH"
 fi
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
+  PATH="$HOME/.local/bin:$PATH"
 fi
 if [ -d "$HOME/go/bin" ] ; then
-    PATH="$HOME/go/bin:$PATH"
+  PATH="$HOME/go/bin:$PATH"
 fi
 
 # Proxy
-export http_proxy=http://192.168.109.170:8080
-export https_proxy=http://192.168.109.170:8080
+if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
+  export http_proxy=http://192.168.109.170:8080
+  export https_proxy=http://192.168.109.170:8080
+fi
 
 # Pyenv
 export PYENV_ROOT="$HOME/.pyenv"
