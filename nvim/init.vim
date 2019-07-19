@@ -45,6 +45,7 @@ set clipboard=unnamed
 set list listchars=tab:\▸\-
 set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
+noremap! <S-Insert> <C-R>+
 
 
 "" Key
