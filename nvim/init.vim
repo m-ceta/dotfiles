@@ -2,6 +2,9 @@
 if has('nvim') && isdirectory( $PYENV_ROOT."/versions/nvim-python3" )
   let g:python3_host_prog = $PYENV_ROOT.'/versions/nvim-python3/bin/python'
 endif
+if isdirectory( "C:\Users\is2225\AppData\Local\Programs\Python\Python37-32" )
+  let g:python3_host_prog = 'C:\Users\is2225\AppData\Local\Programs\Python\Python37-32'
+endif
 
 
 "" Option
