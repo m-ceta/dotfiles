@@ -52,6 +52,12 @@ noremap! <S-Insert> <C-R>+
 let mapleader="\<Space>"
 map <Leader>i gg=<S-g><C-o><C-o>zz
 noremap <Leader>s :%s/
+nnoremap <silent> <leader>tt :<c-u>tabnext<cr>
+nnoremap <silent> <leader>tc :<c-u>tabnew<cr>
+nnoremap <silent> <leader>ww <C-w>w
+nnoremap <silent> <leader>wh :<C-u>sp<CR>
+nnoremap <silent> <leader>wv :<C-u>vs<CR>
+nnoremap <silent> <leader>bn :bnext<CR>
 
 
 "" Dein
