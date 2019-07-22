@@ -1,0 +1,48 @@
+########################
+# メール送信・受信設定 #
+########################
+set realname = "Motohiro Seta"
+set hostname = "gmail.com"
+set from = "motohiro.seta@gmail.com"
+
+set smtp_url = "smtps://motohiro.seta@smtp.gmail.com:465/"
+set imap_user = "motohiro.seta@gmail.com"
+set folder = "imaps://imap.gmail.com:993"
+
+########################
+#セキュリティ設定#
+########################
+set ssl_starttls = yes
+set ssl_force_tls = yes
+
+########################
+#メーラー基本設定#
+########################
+set sidebar_visible = yes
+set sidebar_format = "%B%?F? [%F]?%* %?N?%N/?%S"
+set mail_check_stats
+set sort_aux = reverse-date
+set use_from = yes
+set editor = "vim"
+set charset = "utf-8"
+set assumed_charset = "utf-8:iso-2022-jp:euc-jp:shift_jis"
+set mbox_type = "maildir"
+set spoolfile = "+INBOX"
+set certificate_file = "~/.mutt/certificates"
+set mailcap_path = "~/.mutt/mailcap"
+auto_view text/html
+
+##############################################################
+# キャッシュ設定(キャッシュ先ディレクトリを事前に作成する事) #
+##############################################################
+set header_cache = "~/.mutt/cache/headers"
+set message_cachedir = "~/.mutt/cache/bodies"
+
+#####################################
+# キーバインディング("\C" = Ctrl)#
+#####################################
+bind index G imap-fetch-mail
+bind index,pager \Cp sidebar-prev
+bind index,pager \Cn sidebar-next
+bind index,pager \Cv sidebar-toggle-visible
+

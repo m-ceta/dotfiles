@@ -6,4 +6,5 @@ ln -sf ~/dotfiles/.fd2rc ~/.fd2rc
 ln -sf ~/dotfiles/.profile ~/.profile
 ln -sf ~/dotfiles/nvim ~/.config
 ln -sf ~/dotfiles/.cheatsheet.md ~/.cheatsheet.md
+ln -sf ~/dotfiles/neomutt ~/.config
 
