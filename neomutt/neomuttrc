@@ -1,6 +1,7 @@
 ########################
 # メール送信・受信設定 #
 ########################
+source "gpg -d ~/.mutt/passwords.gpg |"
 set realname = "Motohiro Seta"
 set hostname = "gmail.com"
 set from = "motohiro.seta@gmail.com"

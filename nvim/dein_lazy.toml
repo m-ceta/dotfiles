@@ -26,3 +26,8 @@ hook_add = '''
   source ~/.config/nvim/plugins/nerdtree.vim
 '''
 
+[[plugins]]
+repo = 'fatih/vim-go'
+hook_add = '''
+  source ~/.config/nvim/plugins/go.vim
+'''
