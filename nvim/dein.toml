@@ -57,3 +57,38 @@ repo = 'majutsushi/tagbar'
 hook_add = '''
   source ~/.config/nvim/plugins/tagbar.vim
 '''
+
+[[plugins]]
+repo = 'thinca/vim-quickrun'
+
+[[plugins]]
+repo = 'simeji/winresizer'
+hook_add = '''
+  let g:winresizer_vert_resize = 1
+  let g:winresizer_horiz_resize = 1
+'''
+
+[[plugins]]
+repo = 'mattn/sonictemplate-vim'
+hook_add = '''
+  let g:sonictemplate_vim_template_dir = ['~/.config/nvim/template']
+'''
+
+[[plugins]]
+repo = 'reireias/vim-cheatsheet'
+hook_add = '''
+  let g:cheatsheet#cheat_file = '~/.cheatsheet.md'
+'''
+
+[[plugins]]
+repo = 'alvan/vim-closetag'
+
+[[plugins]]
+repo = 'kana/vim-operator-user'
+
+[[plugins]]
+repo = 'kana/vim-operator-replace'
+hook_add = '''
+  map R <Plug>(operator-replace) 
+'''
+
