@@ -50,13 +50,13 @@ noremap! <S-Insert> <C-R>+
 
 "" Key
 let mapleader="\<Space>"
-map <Leader>i gg=<S-g><C-o><C-o>zz
+map <Leader>I gg=<S-g><C-o><C-o>zz
 noremap <Leader>s :%s/
-nnoremap <silent> <leader>tt :<c-u>tabnext<cr>
-nnoremap <silent> <leader>ttt :<c-u>tabnew<cr>
-nnoremap <silent> <leader>ww <C-w>w
-nnoremap <silent> <leader>wh :<C-u>sp<CR>
-nnoremap <silent> <leader>wv :<C-u>vs<CR>
+nnoremap <silent> <leader>N :<c-u>tabnext<cr>
+nnoremap <silent> <leader>T :<c-u>tabnew<cr>
+nnoremap <silent> <leader>W <C-w>w
+nnoremap <silent> <leader>H :<C-u>sp<CR>
+nnoremap <silent> <leader>V :<C-u>vs<CR>
 
 
 "" Dein
