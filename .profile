@@ -42,6 +42,12 @@ if command -v pyenv 1>/dev/null 2>&1; then
   eval "$(pyenv init -)"
 fi
 eval "$(pyenv virtualenv-init -)"
+if [ -d "$HOME/mypypkg" ] ; then
+  export PYTHONPATH="$HOME/mypypkg:$PYTHONPATH"
+fi
+if [ -d "/mnt/vm/vitesse" ] ; then
+  export PYTHONPATH="/mnt/vm/vitesse/Hull:/mnt/vm/vitesse/Lib:$PYTHONPATH"
+fi
 
 # Neovim
 export XDG_CONFIG_HOME=$HOME/.config
