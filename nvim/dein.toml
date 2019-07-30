@@ -32,9 +32,6 @@ hook_add = '''
 '''
 
 [[plugins]]
-repo = 'junegunn/vim-easy-align'
-
-[[plugins]]
 repo = 'Shougo/neosnippet-snippets'
 
 [[plugins]]
