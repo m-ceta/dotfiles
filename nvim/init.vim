@@ -45,6 +45,7 @@ set clipboard=unnamed
 set list listchars=tab:\▸\-
 set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
+set sh=bash
 noremap! <S-Insert> <C-R>+
 
 
@@ -57,7 +58,25 @@ nnoremap <silent> <leader>T :<c-u>tabnew<cr>
 nnoremap <silent> <leader>W <C-w>w
 nnoremap <silent> <leader>H :<C-u>sp<CR>
 nnoremap <silent> <leader>V :<C-u>vs<CR>
+tnoremap <silent> <ESC> <C-\><C-n>
+tnoremap <silent> <C-[> <C-\><C-n>
 
+"" Terminal
+function! TermHelper(...) abort
+  let h_or_v = get(a:, 1, 'h')
+  let size = get(a:, 2, 15)
+  if h_or_v == 'h'
+    botright new
+    call termopen($SHELL)
+    execute 'resize ' . size
+  else
+    vertical botright new
+    call termopen($SHELL)
+    execute 'vertical resize ' . size
+  endif
+endfun
+command! -count=15 Hterminal :call TermHelper('h', <count>)
+command! -count=40 Vterminal :call TermHelper('v', <count>)
 
 "" Dein
 let s:cache_home = empty($XDG_CACHE_HOME) ? expand('~/.cache') : $XDG_CACHE_HOME
