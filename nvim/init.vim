@@ -2,6 +2,8 @@
 "" For Windows
 if $OS == 'Windows_NT'
   let g:python3_host_prog = '~/AppData/Local/Programs/Python/Python37-32/python'
+else
+  set sh=bash
 endif
 "" for only neovim. in pyenv virtualenv named 'nvim-python3'
 if has('nvim') && isdirectory( $PYENV_ROOT."/versions/nvim-python3" )
@@ -45,7 +47,6 @@ set clipboard=unnamed
 set list listchars=tab:\▸\-
 set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
-set sh=bash
 noremap! <S-Insert> <C-R>+
 
 
