@@ -54,13 +54,16 @@ noremap! <S-Insert> <C-R>+
 let mapleader="\<Space>"
 map <Leader>I gg=<S-g><C-o><C-o>zz
 noremap <Leader>s :%s/
-nnoremap <silent> <leader>N :<c-u>tabnext<cr>
-nnoremap <silent> <leader>T :<c-u>tabnew<cr>
-nnoremap <silent> <leader>W <C-w>w
 nnoremap <silent> <leader>H :<C-u>sp<CR>
 nnoremap <silent> <leader>V :<C-u>vs<CR>
 tnoremap <silent> <ESC> <C-\><C-n>
 tnoremap <silent> <C-[> <C-\><C-n>
+nnoremap <silent> <C-j> :bprev<CR>
+nnoremap <silent> <C-k> :bnext<CR>
+nnoremap <silent> <C-Up> <C-w>k
+nnoremap <silent> <C-Down> <C-w>j
+nnoremap <silent> <C-Left> <C-w>h
+nnoremap <silent> <C-Right> <C-w>l
 
 "" Terminal
 function! TermHelper(...) abort
