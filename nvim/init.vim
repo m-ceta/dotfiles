@@ -69,7 +69,7 @@ endif
 if $OS == 'Windows_NT'
   augroup InsertHook
     autocmd!
-    autocmd InsertLeave * :call system('~/dotfiles/imeoff.bat')
+    autocmd InsertLeave * :call system('%HOMEPATH%/dotfiles/imeoff.bat')
   augroup END
 else
   augroup InsertHook
