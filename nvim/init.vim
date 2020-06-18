@@ -1,16 +1,3 @@
-"" Python environment
-"" For Windows
-if $OS == 'Windows_NT'
-  let g:python3_host_prog = '~/AppData/Local/Programs/Python/Python37-32/python'
-else
-  set sh=bash
-endif
-"" for only neovim. in pyenv virtualenv named 'nvim-python3'
-if has('nvim') && isdirectory( $PYENV_ROOT."/versions/nvim-python3" )
-  let g:python3_host_prog = $PYENV_ROOT.'/versions/nvim-python3/bin/python'
-endif
-
-
 "" Option
 set nocompatible
 syntax on
@@ -49,7 +36,6 @@ set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
 noremap! <S-Insert> <C-R>+
 
-
 "" Key
 let mapleader="\<Space>"
 map <Leader>I gg=<S-g><C-o><C-o>zz
@@ -58,12 +44,32 @@ nnoremap <silent> <leader>H :<C-u>sp<CR>
 nnoremap <silent> <leader>V :<C-u>vs<CR>
 tnoremap <silent> <ESC> <C-\><C-n>
 tnoremap <silent> <C-[> <C-\><C-n>
-nnoremap <silent> <C-j> :bprev<CR>
-nnoremap <silent> <C-k> :bnext<CR>
-nnoremap <silent> <C-Up> <C-w>k
-nnoremap <silent> <C-Down> <C-w>j
-nnoremap <silent> <C-Left> <C-w>h
-nnoremap <silent> <C-Right> <C-w>l
+nnoremap <silent> <C-l> :tabn<CR>
+nnoremap <silent> <C-h> :tabp<CR>
+nnoremap <silent> <C-a> :tab<Space>ba<CR>
+
+"" Python environment
+"" For Windows
+if $OS == 'Windows_NT'
+  let g:python3_host_prog = '~/AppData/Local/Programs/Python/Python37-32/python'
+else
+  set sh=bash
+endif
+"" for only neovim. in pyenv virtualenv named 'nvim-python3'
+if has('nvim') && isdirectory( $PYENV_ROOT."/versions/nvim-python3" )
+  let g:python3_host_prog = $PYENV_ROOT.'/versions/nvim-python3/bin/python'
+endif
+
+" IM OFF command
+function! s:isWsl()
+  return filereadable('/proc/sys/fs/binfmt_misc/WSLInterop')
+endfunction
+
+call system('~/dotfiles/imeoff')
+augroup InsertHook
+  autocmd!
+  autocmd InsertLeave * :call system('~/dotfiles/imeoff')
+augroup END
 
 "" Terminal
 function! TermHelper(...) abort
