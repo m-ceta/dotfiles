@@ -34,7 +34,9 @@ set clipboard=unnamed
 set list listchars=tab:\▸\-
 set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
-noremap! <S-Insert> <C-R>+
+if $OS != 'Windows_NT'
+  set sh=bash
+endif
 
 "" Key
 let mapleader="\<Space>"
@@ -47,29 +49,34 @@ tnoremap <silent> <C-[> <C-\><C-n>
 nnoremap <silent> <C-l> :tabn<CR>
 nnoremap <silent> <C-h> :tabp<CR>
 nnoremap <silent> <C-a> :tab<Space>ba<CR>
+noremap! <S-Insert> <C-R>+
 
-"" Python environment
-"" For Windows
-if $OS == 'Windows_NT'
-  let g:python3_host_prog = '~/AppData/Local/Programs/Python/Python37-32/python'
-else
-  set sh=bash
-endif
-"" for only neovim. in pyenv virtualenv named 'nvim-python3'
-if has('nvim') && isdirectory( $PYENV_ROOT."/versions/nvim-python3" )
-  let g:python3_host_prog = $PYENV_ROOT.'/versions/nvim-python3/bin/python'
-endif
-
-" IM OFF command
+"" etc
 function! s:isWsl()
   return filereadable('/proc/sys/fs/binfmt_misc/WSLInterop')
 endfunction
 
-call system('~/dotfiles/imeoff')
-augroup InsertHook
-  autocmd!
-  autocmd InsertLeave * :call system('~/dotfiles/imeoff')
-augroup END
+"" Python environment
+if $OS == 'Windows_NT'
+  let g:python3_host_prog = '~/AppData/Local/Programs/Python/Python37-32/python'
+elseif has('nvim') && isdirectory( $PYENV_ROOT."/versions/nvim-python3" )
+  let g:python3_host_prog = $PYENV_ROOT.'/versions/nvim-python3/bin/python'
+else
+  let g:python3_host_prog = $PYENV_ROOT.'/usr/bin/python3'
+endif
+
+" IM OFF command
+if $OS == 'Windows_NT'
+  augroup InsertHook
+    autocmd!
+    autocmd InsertLeave * :call system('~/dotfiles/imeoff.bat')
+  augroup END
+else
+  augroup InsertHook
+    autocmd!
+    autocmd InsertLeave * :call system('~/dotfiles/imeoff')
+  augroup END
+endif
 
 "" Terminal
 function! TermHelper(...) abort
