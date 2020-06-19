@@ -1,10 +1,9 @@
-"" Option
 set nocompatible
 syntax on
 set history=2000
 set viminfo='100,/50,%,<1000,f50,s100,:100,c,h,!
 set display=lastline
-set notitle
+set title
 set shortmess+=I
 set nobackup
 set updatetime=0
@@ -34,7 +33,7 @@ set clipboard=unnamed
 set list listchars=tab:\▸\-
 set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
-if $OS != 'Windows_NT'
+if has('unix')
   set sh=bash
 endif
 
@@ -54,13 +53,8 @@ tnoremap <silent> <C-t> <C-\><C-n>:q<CR>
 nnoremap <silent> q :q<CR>
 noremap! <S-Insert> <C-R>+
 
-"" etc
-function! s:isWsl()
-  return filereadable('/proc/sys/fs/binfmt_misc/WSLInterop')
-endfunction
-
 "" Python environment
-if $OS == 'Windows_NT'
+if filereadable('~/AppData/Local/Programs/Python/Python37-32/python')
   let g:python3_host_prog = '~/AppData/Local/Programs/Python/Python37-32/python'
 elseif has('nvim') && isdirectory( $PYENV_ROOT."/versions/nvim-python3" )
   let g:python3_host_prog = $PYENV_ROOT.'/versions/nvim-python3/bin/python'
@@ -69,7 +63,7 @@ else
 endif
 
 " IM OFF command
-if $OS == 'Windows_NT'
+if has('win32')
   augroup InsertHook
     autocmd!
     autocmd InsertLeave * :call system('%HOMEPATH%\dotfiles\imeoff.bat')

@@ -1,7 +1,6 @@
+set guifont=MS\ Gothic:h14
+set columns=100
+set lines=50
 set mouse=a
-Guifont! MS Gothic:h14
-GuiTabline  0
-GuiPopupmenu  0
-nnoremap <silent><RightMouse> :call GuiShowContextMenu()<CR>
-inoremap <silent><RightMouse> <Esc>:call GuiShowContextMenu()<CR>
-vnoremap <silent><RightMouse> :call GuiShowContextMenu()<CR>
+set nomousefocus
+set mousehide
