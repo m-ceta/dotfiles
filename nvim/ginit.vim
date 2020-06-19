@@ -1,6 +1,7 @@
-if $OS == 'Windows_NT'
-  Guifont ＭＳ ゴシック:h14
-endif
-set guioptions=egmrti
+set mouse=a
+GuiFont! MS Gothic:h14
 GuiTabline  0
 GuiPopupmenu  0
+nnoremap <silent><RightMouse> :call GuiShowContextMenu()<CR>
+inoremap <silent><RightMouse> <Esc>:call GuiShowContextMenu()<CR>
+vnoremap <silent><RightMouse> :call GuiShowContextMenu()<CR>
