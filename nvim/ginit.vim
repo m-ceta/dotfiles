@@ -1,5 +1,5 @@
 set mouse=a
-GuiFont! MS Gothic:h14
+Guifont! MS Gothic:h14
 GuiTabline  0
 GuiPopupmenu  0
 nnoremap <silent><RightMouse> :call GuiShowContextMenu()<CR>
