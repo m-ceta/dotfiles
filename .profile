@@ -31,6 +31,9 @@ if [ -d "$HOME/go" ] ; then
     PATH="$GOPATH/bin:$PATH"
   fi
 fi
+if [ -d "$HOME/.cargo/bin" ] ; then
+  PATH="$HOME/.cargo/bin:$PATH"
+fi
 
 # Proxy
 if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
