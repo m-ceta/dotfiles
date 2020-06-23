@@ -14,12 +14,6 @@ hook_add = '''
 '''
 
 [[plugins]]
-repo = 'w0rp/ale'
-hook_add = '''
-  source ~/.config/nvim/plugins/ale.vim
-'''
-
-[[plugins]]
 repo = 'Shougo/denite.nvim'
 hook_add = '''
   source ~/.config/nvim/plugins/denite.vim
@@ -89,3 +83,10 @@ hook_add = '''
   map R <Plug>(operator-replace) 
 '''
 
+[[plugins]]
+repo = 'autozimu/LanguageClient-neovim'
+rev = 'next'
+build = 'bash install.sh'
+hook_add = '''
+  source ~/.config/nvim/plugins/LanguageClient-neovim.vim
+'''

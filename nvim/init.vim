@@ -51,6 +51,7 @@ nnoremap <silent> <C-a> :tab<Space>ba<CR>
 nnoremap <silent> <C-t> :split<CR><C-w>w<CR>:terminal<CR>a
 tnoremap <silent> <C-t> <C-\><C-n>:q<CR>
 nnoremap <silent> q :q<CR>
+nnoremap <silent> <S-F1> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
 
 "" Python environment
