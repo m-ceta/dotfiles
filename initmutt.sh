@@ -1,3 +1,4 @@
+#!/bin/sh
 echo -n PASSWORD: 
 read pass
 echo -n E-MAIL: 
