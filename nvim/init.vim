@@ -67,12 +67,12 @@ endif
 if has('win32')
   augroup InsertHook
     autocmd!
-    autocmd InsertLeave * :call system('%HOMEPATH%\dotfiles\imeoff.bat')
+    autocmd InsertLeave * :call system('%HOMEPATH%\dotfiles\scripts\imeoff.bat')
   augroup END
 else
   augroup InsertHook
     autocmd!
-    autocmd InsertLeave * :call system('~/dotfiles/imeoff')
+    autocmd InsertLeave * :call system('~/dotfiles/scripts/imeoff')
   augroup END
 endif
 
