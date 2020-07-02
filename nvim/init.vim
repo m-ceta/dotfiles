@@ -48,8 +48,8 @@ tnoremap <silent> <C-[> <C-\><C-n>
 nnoremap <silent> <C-l> :tabn<CR>
 nnoremap <silent> <C-h> :tabp<CR>
 nnoremap <silent> <C-a> :tab<Space>ba<CR>
-nnoremap <silent> <C-t> :split<CR><C-w>w<CR>:terminal<CR>a
-tnoremap <silent> <C-t> <C-\><C-n>:q<CR>
+nnoremap <silent> <C-t> :ReuseTerm<CR>a
+tnoremap <silent> <C-t> <CR><C-\><C-n>:q<CR>
 nnoremap <silent> q :q<CR>
 nnoremap <silent> <S-F1> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
@@ -77,21 +77,29 @@ else
 endif
 
 "" Terminal
-function! TermHelper(...) abort
-  let h_or_v = get(a:, 1, 'h')
-  let size = get(a:, 2, 15)
-  if h_or_v == 'h'
-    botright new
-    call termopen($SHELL)
-    execute 'resize ' . size
+function! SearchTermBuffer() abort
+  for num in nvim_list_bufs()
+    if stridx(bufname(num), 'term:') == 0
+      return num
+    endif
+  endfor
+  return -1
+endfun
+
+function! ReuseTerm() abort
+  let num = SearchTermBuffer()
+  if num  >= 0
+    botright new   
+    let cbn = bufnr('%')
+    execute num.'buffer'
+    execute 'bwipeout '.cbn
   else
-    vertical botright new
+    botright new   
     call termopen($SHELL)
-    execute 'vertical resize ' . size
   endif
 endfun
-command! -count=15 Hterminal :call TermHelper('h', <count>)
-command! -count=40 Vterminal :call TermHelper('v', <count>)
+
+command! ReuseTerm :call ReuseTerm()
 
 "" Dein
 let s:cache_home = empty($XDG_CACHE_HOME) ? expand('~/.cache') : $XDG_CACHE_HOME
