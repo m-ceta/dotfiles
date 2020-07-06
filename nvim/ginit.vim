@@ -1,4 +1,3 @@
-set mouse=a
-Guifont! MS\ Gothic:h12
+Guifont! MS\ Gothic:h14
 GuiTabline 0
 GuiPopupmenu 0

@@ -51,7 +51,7 @@ nnoremap <silent> <C-a> :tab<Space>ba<CR>
 nnoremap <silent> <C-t> :ReuseTerm<CR>a
 tnoremap <silent> <C-t> <CR><C-\><C-n>:q<CR>
 nnoremap <silent> q :q<CR>
-nnoremap <silent> <S-F1> :Cheat<CR>
+nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
 
 "" Python environment
@@ -100,6 +100,16 @@ function! ReuseTerm() abort
 endfun
 
 command! ReuseTerm :call ReuseTerm()
+
+"" RC
+function! s:source_rc(rc_file_name)
+  let rc_file = expand('~/.config/nvim/plugins/' . a:rc_file_name)
+  if filereadable(rc_file)
+    execute 'source' rc_file
+  endif
+endfunction
+
+"call s:source_rc('')
 
 "" Dein
 let s:cache_home = empty($XDG_CACHE_HOME) ? expand('~/.cache') : $XDG_CACHE_HOME
