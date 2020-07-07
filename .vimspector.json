@@ -4,43 +4,26 @@
       "adapter": "vscode-cpptools",
       "configuration": {
         "request": "launch",
-        "program": "<path to binary>",
-        "args": [ ... ],
-        "cwd": "<working directory>",
-        "environment": [ ... ],
+        "program": "$HOME/rust/projects/${projectName}/target/debug/${projectName}",
+        "args": [],
+        "cwd": "$HOME/rust/projects/${projectName}",
+        "environment": [],
         "externalConsole": true,
-        "MIMode": "<lldb or gdb>"
+        "MIMode": "gdb"
       }
     },
-    "Cpp_Attach": {
-      "adapter": "vscode-cpptools",
-      "configuration": {
-        "request": "attach",
-        "program": "<path to binary>",
-        "MIMode": "<lldb or gdb>"
-      }
-    },
-    "<name>: Python_Launch": {
+    "Python_Launch": {
       "adapter": "debugpy",
       "configuration": {
-        "name": "<name>: Launch",
+        "name": "Python_Launch",
         "type": "python",
         "request": "launch",
-        "cwd": "<working directory>",
+        "cwd": "${fileDirname}",
         "python": "python3",
         "stopOnEntry": true,
         "console": "externalTerminal",
         "debugOptions": [],
-        "program": "<path to main python file>"
-      }
-    },
-    "Python_Attach": {
-      "adapter": "multi-session",
-      "configuration": {
-        "request": "attach",
-        "pathMappings": [
-          // mappings here (optional)
-        ]
+        "program": "${file}"
       }
     },
     "Go_Launch": {
