@@ -50,7 +50,6 @@ nnoremap <silent> <C-h> :tabp<CR>
 nnoremap <silent> <C-a> :tab<Space>ba<CR>
 nnoremap <silent> <C-t> :ReuseTerm<CR>a
 tnoremap <silent> <C-t> <CR><C-\><C-n>:q<CR>
-nnoremap <silent> q :q<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
 
