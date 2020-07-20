@@ -9,4 +9,5 @@ ln -sf ~/dotfiles/nvim ~/.config
 ln -sf ~/dotfiles/.cheatsheet.md ~/.cheatsheet.md
 ln -sf ~/dotfiles/neomutt ~/.config
 ln -sf ~/dotfiles/.vimspector.json ~/.vimspector.json
+ln -sf ~/dotfiles/.tmux.conf ~/.tmux.conf
 
