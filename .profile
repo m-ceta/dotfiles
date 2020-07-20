@@ -37,8 +37,10 @@ fi
 
 # Proxy
 if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
-  export http_proxy=http://192.168.109.170:8080
-  export https_proxy=http://192.168.109.170:8080
+  if [ -e $HOME/.bussiness ]; then
+    export http_proxy=http://192.168.109.170:8080
+    export https_proxy=http://192.168.109.170:8080
+  fi
 fi
 
 # Pyenv
