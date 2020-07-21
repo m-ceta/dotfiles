@@ -1,3 +1,3 @@
-Guifont! MS\ Gothic:h14
+Guifont! ＭＳ\ ゴシック:h12
 GuiTabline 0
 GuiPopupmenu 0

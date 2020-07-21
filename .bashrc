@@ -129,3 +129,7 @@ if [ $? -eq 1 -a -z "$TMUX" ]; then
 elif [ -z "$TMUX" ] ; then
     exec tmux attach
 fi
+
+# LANG
+export LANG=ja_JP.UTF-8
+export LANGUAGE=ja

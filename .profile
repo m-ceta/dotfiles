@@ -40,6 +40,11 @@ if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
   if [ -e $HOME/.bussiness ]; then
     export http_proxy=http://192.168.109.170:8080
     export https_proxy=http://192.168.109.170:8080
+    export GTK_IM_MODULE=fcitx
+    export QT_IM_MODULE=fcitx
+    export XMODIFIERS="@im=fcitx"
+    export DefaultIMModule=fcitx
+    xset -r 49
   fi
 fi
 
