@@ -122,3 +122,10 @@ if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
   export LIBGL_ALWAYS_INDIRECT=1
 fi
 
+# auto start tmux
+tmux ls > /dev/null
+if [ $? -eq 1 -a -z "$TMUX" ]; then
+    exec tmux
+elif [ -z "$TMUX" ] ; then
+    exec tmux attach
+fi
