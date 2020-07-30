@@ -1,3 +1,1 @@
-Guifont! ＭＳ\ ゴシック:h12
-GuiTabline 0
-GuiPopupmenu 0
+set guifont=ＭＳ\ ゴシック:h12
