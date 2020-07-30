@@ -36,6 +36,13 @@ set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
 if has('unix')
   set sh=bash
 endif
+if exists('g:GuiLoaded')
+  GuiTabline 0
+  GuiPopupmenu 0
+  GuiFont! ＭＳ\ ゴシック:h14
+else
+  set guifont=ＭＳ\ ゴシック:h14
+endif
 
 "" Key
 let mapleader="\<Space>"
