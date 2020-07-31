@@ -123,12 +123,12 @@ if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
 fi
 
 # auto start tmux
-tmux ls > /dev/null
-if [ $? -eq 1 -a -z "$TMUX" ]; then
-    exec tmux
-elif [ -z "$TMUX" ] ; then
-    exec tmux attach
-fi
+#tmux ls > /dev/null
+#if [ $? -eq 1 -a -z "$TMUX" ]; then
+#    exec tmux
+#elif [ -z "$TMUX" ] ; then
+#    exec tmux attach
+#fi
 
 # LANG
 export LANG=ja_JP.UTF-8

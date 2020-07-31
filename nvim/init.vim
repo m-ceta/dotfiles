@@ -36,6 +36,7 @@ set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
 if has('unix')
   set sh=bash
 endif
+set mouse=a
 if exists('g:GuiLoaded')
   GuiTabline 0
   GuiPopupmenu 0
