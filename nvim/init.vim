@@ -62,13 +62,8 @@ nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
 
 "" Python environment
-if filereadable('~/AppData/Local/Programs/Python/Python37-32/python')
-  let g:python3_host_prog = '~/AppData/Local/Programs/Python/Python37-32/python'
-elseif has('nvim') && isdirectory( $PYENV_ROOT."/versions/nvim-python3" )
-  let g:python3_host_prog = $PYENV_ROOT.'/versions/nvim-python3/bin/python'
-else
-  let g:python3_host_prog = $PYENV_ROOT.'/usr/bin/python3'
-endif
+let g:python3_host_prog = expand('~/nvim-python3/bin/python3')
+let g:python_host_prog = expand('~/nvim-python2/bin/python2')
 
 " IM OFF command
 if has('win32')

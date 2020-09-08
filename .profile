@@ -58,9 +58,14 @@ eval "$(pyenv virtualenv-init -)"
 if [ -d "$HOME/mypypkg" ] ; then
   export PYTHONPATH="$HOME/mypypkg:$PYTHONPATH"
 fi
-if [ -d "/mnt/vm/vitesse" ] ; then
-  export PYTHONPATH="/mnt/vm/vitesse/Hull:/mnt/vm/vitesse/Lib:$PYTHONPATH"
+if [ -d "$HOME/vitesse" ] ; then
+  export PYTHONPATH="$HOME/vitesse/Hull:$HOME/vitesse/Lib:$HOME/vitesse/Ext:$PYTHONPATH"
 fi
+
+# Android
+PATH=$PATH:~/Android/sdk/platform-tools
+export ANDROID_SDK_HOME=~/Android/Sdk
+export NDK_HOME=~/Android/android-ndk-r21d
 
 # Neovim
 export XDG_CONFIG_HOME=$HOME/.config
