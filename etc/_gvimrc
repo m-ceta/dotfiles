@@ -1,0 +1,10 @@
+colorscheme darkblue
+set guifont=MS_Gothic:h14:cSHIFTJIS
+set columns=100
+set lines=40
+set cmdheight=1
+set number
+set nowrap
+set nobackup
+set noswapfile
+set noundofile

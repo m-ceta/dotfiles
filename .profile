@@ -63,9 +63,11 @@ if [ -d "$HOME/vitesse" ] ; then
 fi
 
 # Android
-PATH=$PATH:~/Android/sdk/platform-tools
-export ANDROID_SDK_HOME=~/Android/Sdk
-export NDK_HOME=~/Android/android-ndk-r21d
+export PATH=$PATH:~/Android/sdk/platform-tools
+export ANDROID_SDK_ROOT=~/Android/Sdk
+export ANDROID_HOME=$ANDROID_SDK_ROOT
+export ANDROID_NDK_ROOT=~/Android/android-ndk-r21d
+export NDK_HOME=$ANDROID_NDK_ROOT
 
 # Neovim
 export XDG_CONFIG_HOME=$HOME/.config
