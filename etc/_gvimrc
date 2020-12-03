@@ -8,6 +8,11 @@ set nowrap
 set nobackup
 set noswapfile
 set noundofile
+set clipboard+=unnamed
+set tabstop=2
+set shiftwidth=2
+set smartindent
+
 let mapleader="\<Space>"
 noremap <Leader>s :%s/
 nnoremap <silent> <C-l> :tabn<CR>
@@ -80,4 +85,5 @@ endfunction
  
 inoremap <expr> <C-x>  <SID>hint_i_ctrl_x()
 autocmd FileType java :set dictionary=$HOME/.vim/dict/java.dict
+autocmd FileType tcl :set dictionary=$HOME/.vim/dict/tcl.dict
 
