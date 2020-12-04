@@ -26,8 +26,3 @@ pip install pynvim
 pip install neovim
 deactivate
 pip install --upgrade pip
-pip install python-language-server
-pip install pyls-isort
-pip install pyls-black
-pip install pyflakes
-pip install fortran-language-server

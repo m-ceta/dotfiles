@@ -1,27 +1,4 @@
 [[plugins]]
-repo = 'Shougo/deoplete.nvim'
-hook_add = '''
-  source ~/.config/nvim/plugins/deoplete.vim
-'''
-hook_source = '''
-  source ~/.config/nvim/plugins/deoplete_post.vim
-'''
-on_i=1
-
-[[plugins]]
-repo = 'Shougo/neosnippet.vim'
-depends = ['neosnippet-snippets', 'context_filetype.vim']
-on_i=1
-hook_source = '''
-  source ~/.config/nvim/plugins/neosnippet.vim
-'''
-
-[[plugins]]
-repo = 'Shougo/neoinclude.vim'
-on_ft = ['c', 'cpp']
-depends = ['deoplete.nvim']
-
-[[plugins]]
 repo = 'scrooloose/nerdtree'
 hook_add = '''
   source ~/.config/nvim/plugins/nerdtree.vim
