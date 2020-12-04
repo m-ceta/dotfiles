@@ -20,6 +20,7 @@ pip install pyls-isort
 pip install pyls-black
 pip install pyflakes
 pip install fortran-language-server
+pip install neovim
 deactivate
 source ~/nvim-python2/bin/activate
 pip install pynvim
@@ -28,4 +29,5 @@ pip install pyls-isort
 pip install pyls-black
 pip install pyflakes
 pip install fortran-language-server
+pip install neovim
 deactivate
