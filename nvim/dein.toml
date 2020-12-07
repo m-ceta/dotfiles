@@ -20,13 +20,16 @@ hook_add = '''
 '''
 
 [[plugins]]
+repo = 'Shougo/neomru.vim'
+
+[[plugins]]
+repo = 'Shougo/neoyank.vim'
+
+[[plugins]]
 repo = 'osyo-manga/vim-anzu'
 hook_add = '''
   source ~/.config/nvim/plugins/anzu.vim
 '''
-
-[[plugins]]
-repo = 'Shougo/neosnippet-snippets'
 
 [[plugins]]
 repo = 'Shougo/context_filetype.vim'
