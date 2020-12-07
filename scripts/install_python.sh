@@ -2,7 +2,7 @@
 #install pyenv
 git clone git://github.com/yyuu/pyenv.git ~/.pyenv
 #install 2 and 3
-pyenv install 3.8.1
+pyenv install 3.8.5
 pyenv install 2.7.18
 #make virtualenv
 pyenv global 3.8.1
