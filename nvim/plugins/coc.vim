@@ -1,4 +1,3 @@
-set signcolumn=yes
 set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
 
 nmap <silent> [g <Plug>(coc-diagnostic-prev)
