@@ -30,6 +30,7 @@ set showtabline=2
 set autoindent
 set cursorline
 set clipboard=unnamed
+set autochdir
 set list listchars=tab:\▸\-
 set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
