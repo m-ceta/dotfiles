@@ -2,6 +2,10 @@
 repo = 'Shougo/dein.vim'
 
 [[plugins]]
+repo = 'cohama/lexima.vim'
+on_event = 'InsertEnter'
+
+[[plugins]]
 repo = 'raphamorim/lucario'
 hook_add = '''
   colorscheme lucario

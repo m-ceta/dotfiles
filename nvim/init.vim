@@ -61,11 +61,6 @@ nnoremap <silent> <C-t> :ReuseTerm<CR>
 tnoremap <silent> <C-t> <CR><C-\><C-n>:q<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
-inoremap { {}<LEFT>
-inoremap [ []<LEFT>
-inoremap ( ()<LEFT>
-inoremap " ""<LEFT>
-inoremap ' ''<LEFT>
 
 "" Python environment
 let g:python3_host_prog = expand('~/nvim-python3/bin/python3')
