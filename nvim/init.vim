@@ -57,10 +57,15 @@ tnoremap <silent> <C-[> <C-\><C-n>
 nnoremap <silent> <C-l> :tabn<CR>
 nnoremap <silent> <C-h> :tabp<CR>
 nnoremap <silent> <C-a> :tab<Space>ba<CR>
-nnoremap <silent> <C-t> :ReuseTerm<CR>a
+nnoremap <silent> <C-t> :ReuseTerm<CR>
 tnoremap <silent> <C-t> <CR><C-\><C-n>:q<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
+inoremap { {}<LEFT>
+inoremap [ []<LEFT>
+inoremap ( ()<LEFT>
+inoremap " ""<LEFT>
+inoremap ' ''<LEFT>
 
 "" Python environment
 let g:python3_host_prog = expand('~/nvim-python3/bin/python3')
@@ -90,15 +95,21 @@ function! SearchTermBuffer() abort
 endfun
 
 function! ReuseTerm() abort
-  let num = SearchTermBuffer()
-  if num  >= 0
-    botright new   
-    let cbn = bufnr('%')
-    execute num.'buffer'
-    execute 'bwipeout '.cbn
+  if stridx(bufname(), 'term:') == 0
+    quit
   else
-    botright new   
-    call termopen($SHELL)
+    let num = SearchTermBuffer()
+    if num  >= 0
+      botright new   
+      let cbn = bufnr('%')
+      execute num.'buffer'
+      execute 'bwipeout '.cbn
+      startinsert
+    else
+      botright new   
+      call termopen($SHELL)
+      startinsert
+    endif
   endif
 endfun
 
