@@ -92,3 +92,6 @@ merged = '0'
 hook_add = '''
   source ~/.config/nvim/plugins/coc.vim
 '''
+[[plugins]]
+repo = 'mechatroner/rainbow_csv'
+
