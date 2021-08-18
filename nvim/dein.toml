@@ -95,3 +95,6 @@ hook_add = '''
 [[plugins]]
 repo = 'mechatroner/rainbow_csv'
 
+[[plugins]]
+repo = 'lambdalisue/gina.vim'
+
