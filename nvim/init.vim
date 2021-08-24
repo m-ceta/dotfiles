@@ -26,6 +26,7 @@ set cmdheight=1
 set laststatus=2
 set ruler
 set number
+set numberwidth=5
 set showtabline=2
 set autoindent
 set cursorline
