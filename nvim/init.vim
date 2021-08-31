@@ -62,6 +62,8 @@ nnoremap <silent> <C-t> :ReuseTerm<CR>
 tnoremap <silent> <C-t> <CR><C-\><C-n>:q<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
+nmap <Leader>n :CocCommand explorer --no-toggle<CR>
+nmap <Leader>o :CocCommand explorer --open-action-strategy tab --sources=buffer+,file+ --position floating<CR>
 
 "" Python environment
 let g:python3_host_prog = expand('~/nvim-python3/bin/python3')
