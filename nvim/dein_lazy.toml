@@ -1,16 +1,4 @@
 [[plugins]]
-repo = 'scrooloose/nerdtree'
-hook_add = '''
-  source ~/.config/nvim/plugins/nerdtree.vim
-'''
-
-[[plugins]]
-repo = 'Xuyuanp/nerdtree-git-plugin'
-
-[[plugins]]
-repo = 'tiagofumo/vim-nerdtree-syntax-highlight'
-
-[[plugins]]
 repo = 'puremourning/vimspector'
 on_ft = ['python', 'golang', 'c', 'cpp', 'rust']
 build = './install_gadget.py --enable-c --enable-python --enable-go --force-enable-rust'
