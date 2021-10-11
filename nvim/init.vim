@@ -43,8 +43,10 @@ if exists('g:GuiLoaded')
   GuiTabline 0
   GuiPopupmenu 0
   GuiFont! ＭＳ\ ゴシック:h14
+  GuiScrollBar 1
 else
   set guifont=ＭＳ\ ゴシック:h14
+  set guioptions+=r
 endif
 
 "" Key
@@ -122,6 +124,7 @@ function! s:source_rc(rc_file_name)
 endfunction
 
 "call s:source_rc('')
+
 
 "" Dein
 let s:cache_home = empty($XDG_CACHE_HOME) ? expand('~/.cache') : $XDG_CACHE_HOME

@@ -98,3 +98,9 @@ repo = 'mechatroner/rainbow_csv'
 [[plugins]]
 repo = 'lambdalisue/gina.vim'
 
+[[plugins]]
+repo = 'skywind3000/vim-quickui'
+hook_add = '''
+  source ~/.config/nvim/plugins/quickui.vim
+'''
+
