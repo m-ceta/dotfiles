@@ -64,6 +64,10 @@ nnoremap <silent> <C-t> :ReuseTerm<CR>
 tnoremap <silent> <C-t> <CR><C-\><C-n>:q<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
+nnoremap <silent> <F7> :<C-u>echo sytem('cargo run')<CR>
+nnoremap <silent> <S-F7> :<C-u>echo system('cargo check')<CR>
+nnoremap <silent> <F8> :<C-u>echo system('cargo build')<CR>
+nnoremap <silent> <S-F8> :<C-u>echo system('cargo build --release')<CR>
 nmap <Leader>n :CocCommand explorer<CR>
 nmap <Leader>o :CocCommand explorer --open-action-strategy tab --sources=buffer+,file+ --position floating<CR>
 
@@ -114,17 +118,6 @@ function! ReuseTerm() abort
 endfun
 
 command! ReuseTerm :call ReuseTerm()
-
-"" RC
-function! s:source_rc(rc_file_name)
-  let rc_file = expand('~/.config/nvim/plugins/' . a:rc_file_name)
-  if filereadable(rc_file)
-    execute 'source' rc_file
-  endif
-endfunction
-
-"call s:source_rc('')
-
 
 "" Dein
 let s:cache_home = empty($XDG_CACHE_HOME) ? expand('~/.cache') : $XDG_CACHE_HOME
