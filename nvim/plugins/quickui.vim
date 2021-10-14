@@ -16,6 +16,7 @@ function CreateNewRustProject()
   endif
 endfunction
 
+
 " Define menu
 call quickui#menu#reset()
 call quickui#menu#install("&File", [
@@ -47,6 +48,8 @@ call quickui#menu#install('&Edit', [
                         \ [ "Go &Type\tgy", 'call CocActionAsync("jumpTypeDefinition")'],
                         \ [ "Go &Implementation\tgi", 'call CocActionAsync("jumpImplementation")'],
                         \ [ "Go &References\tgr", 'call CocActionAsync("jumpReferences")'],
+                        \ [ "--", '' ],
+                        \ [ "Toggle &Comment\tgc(has range) or gcc", 'Commentary' ],
                         \ [ "--", '' ],
                         \ [ "R&ename\t(leader)rn", 'call CocActionAsync("rename")' ],
                         \ [ "&Format\t(leader)f", 'call CocActionAsync("format")' ],
