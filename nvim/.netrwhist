@@ -1,5 +1,6 @@
 let g:netrw_dirhistmax  =10
-let g:netrw_dirhistcnt =8
+let g:netrw_dirhistcnt =9
+let g:netrw_dirhist_9='/home/moto/dotfiles/nvim/plugins'
 let g:netrw_dirhist_8='/home/moto/NyaoVim/docs'
 let g:netrw_dirhist_7='/home/moto/NyaoVim'
 let g:netrw_dirhist_6='/home/moto'

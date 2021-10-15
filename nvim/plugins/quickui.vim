@@ -21,18 +21,21 @@ endfunction
 call quickui#menu#reset()
 call quickui#menu#install("&File", [
                         \ ["&Open\t(leader)o", 'CocCommand explorer --open-action-strategy tab --sources=buffer+,file+ --position floating'],
-                        \ ["&Save All\twa", 'wa'],
+                        \ ["&Save All\twa", 'wa!'],
                         \ [ "--", '' ],
                         \ ["&Create New File", 'call CreateNewFile()'],
                         \ ["&Create New Rust Project", 'call CreateNewRustProject()'],
                         \ [ "--", '' ],
-                        \ ["&Quit\tqa", 'qa'],
+                        \ ["&Quit\tqa", 'qa!'],
                         \ ])
 call quickui#menu#install("&View", [
                         \ ["Split Window &Vertical\t(leader)V", 'vs'],
                         \ ["Split Window &Horizontal\t(leader)H", 'sp'],
                         \ ["&Close Window \tclo", 'close'],
                         \ ["&Move Window \twincw", 'winc w'],
+                        \ [ "--", '' ],
+                        \ [ "Resize window (&+5)\t:vertical resize +5", 'vertical resize +5' ],
+                        \ [ "Resize window (&-5)\t:vertical resize -5", 'vertical resize -5' ],
                         \ [ "--", '' ],
                         \ ["&Function\t(leader)g", 'Tagbar'],
                         \ ["&Explorer\t(leader)n", 'CocCommand explorer'],
@@ -107,7 +110,7 @@ let content = [
 let opts = {'index':g:quickui#context#cursor}
 
 " hit space twice to open menu
-noremap <space><space> :call quickui#menu#open()<cr>
-noremap <RightMouse> :call quickui#context#open(content, opts)<cr>
+noremap <space><space> :<C-u>call quickui#menu#open()<cr>
+noremap <RightMouse> :<C-u>call quickui#context#open(content, opts)<cr>
 
 
