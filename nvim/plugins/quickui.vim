@@ -80,6 +80,21 @@ call quickui#menu#install("&Rust", [
                         \ ["&Build\t(F8)", 'echo system("cargo build")'],
                         \ ["Build &Release\tShift+(F8)", 'echo system("cargo build --release")'],
                         \ ], '<auto>', 'rust')
+call quickui#menu#install("&Git", [
+                        \ ['&Add', 'G add'],
+                        \ ['&Commit', 'G commit'],
+                        \ ['&Remove', 'G rm'],
+                        \ ['&Push', 'G push'],
+                        \ ['P&ull', 'G pull'],
+                        \ [ "--", '' ],
+                        \ ['&Status', 'G status'],
+                        \ ['&Diff', 'G diff'],
+                        \ ['&Grep', 'G grep'],
+                        \ ['&Blame', 'G blame'],
+                        \ [ "--", '' ],
+                        \ ['C&heckout', 'G checkout'],
+                        \ ['&Merge', 'G merge'],
+                        \ ])
 call quickui#menu#install("&Option", [
                         \ ['Set &Spell %{&spell? "Off":"On"}', 'set spell!'],
                         \ ['Set &Cursor Line %{&cursorline? "Off":"On"}', 'set cursorline!'],
