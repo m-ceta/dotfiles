@@ -95,15 +95,13 @@ call quickui#menu#install("&Git", [
                         \ ['B&ranch', 'Git branch'],
                         \ ['C&heckout', 'Git checkout'],
                         \ ['&Merge', 'Git merge'],
+                        \ [ "--", '' ],
+                        \ ['&Yank m-ceta pashphrase', 'let @+ = trim(system("sh ~/dotfiles/scripts/viewtoken.sh"))'],
                         \ ])
 call quickui#menu#install("&Option", [
                         \ ['Set &Spell %{&spell? "Off":"On"}', 'set spell!'],
                         \ ['Set &Cursor Line %{&cursorline? "Off":"On"}', 'set cursorline!'],
                         \ ['Set &Paste %{&paste? "Off":"On"}', 'set paste!'],
-                        \ [ "--", '' ],
-                        \ ['&Yank m-ceta pashphrase', 'let @+ = trim(system("sh ~/dotfiles/scripts/viewtoken.sh"))'],
-                        \ ['&Update dotfiles', 'echo system("sh ~/dotfiles/scripts/update.sh")'],
-                        \ ['&Sync dotfiles', 'echo system("sh ~/dotfiles/scripts/sync.sh")'],
                         \ ])
 call quickui#menu#install('H&elp', [
                         \ ["&Cheatsheet", 'help index'],
