@@ -5,4 +5,4 @@ auth="${user}\n${pass}\n"
 cd ~/dotfiles
 git add .
 git commit -m "anything"
-git push origin master < echo $auth 
+echo $auth | git push origin master
