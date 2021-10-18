@@ -1,6 +1,6 @@
 #!/bin/sh
 pass=$(sh ~/dotfiles/scripts/viewtoken.sh)
-echo $pass | pbcopy
+echo $pass | xsel --clipboard --input
 cd ~/dotfiles
 git add .
 git commit -m "anything"
