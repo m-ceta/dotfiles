@@ -2,6 +2,8 @@
 user=m-ceta
 pass=$(sh ~/dotfiles/scripts/viewtoken.sh)
 auth="${user}\n${pass}\n"
+echo $pass
+echo $auth
 cd ~/dotfiles
 git add .
 git commit -m "anything"
