@@ -54,8 +54,8 @@ call quickui#menu#install('&Edit', [
                         \ [ "--", '' ],
                         \ [ "Toggle &Comment\tgc(has range) or gcc", 'Commentary' ],
                         \ [ "--", '' ],
-                        \ [ "R&ename\t(leader)rn", 'call CocActionAsync("rename")' ],
-                        \ [ "&Format\t(leader)f", 'call CocActionAsync("format")' ],
+                        \ [ "R&ename Code\t(leader)rn", 'call CocActionAsync("rename")' ],
+                        \ [ "&Format Code\t(leader)f", 'call CocActionAsync("format")' ],
                         \ [ "--", '' ],
                         \ [ "&Grep\tCtrl+dG", 'Denite grep -buffer-name=search-buffer-denite' ],
                         \ ])
