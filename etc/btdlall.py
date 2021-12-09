@@ -1,11 +1,12 @@
 # -*- coding: utf8 -*-
-import urllib.request
-import lhafile
+import sys
 import os
 import os.path
 import re
 import time
+import lhafile
 import traceback
+import urllib.request
 import pandas as pd
 from sklearn.preprocessing import StandardScaler,MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -25,17 +26,17 @@ kreg1 = re.compile(r"^([0-9]+)KBGN$")
 kreg2 = re.compile(r"^([0-9]+)KEND$")
 kreg3 = re.compile(r"^[ ]+([0-9]+)R[ ]+([^ ]+)[ ]+H([0-9]+)m[ ]+([^ ]+)[ ]+風[ ]+([^ ]+)[ ]+([-.0-9]+)m[ ]+波[^ ]*[ ]+([-.0-9]+)cm$")
 kreg4 = re.compile(r"^[ ]+([0-9]+)[ ]+([1-6])[ ]+([0-9]+)[ ]+([^ ]+)[ ]+([0-9]+)[ ]+([0-9]+)[ ]+([.0-9]+)[ ]+([0-9]+)[ ]+([.0-9]+)[ ]+([.0-9]+)$")
-kreg5 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]*$")
-kreg6 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]*$")
-kreg7 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([^-. 0-9]+)[ ]+([0-9]+)[ ]*$")
-kreg8 = re.compile(r"^[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([^ ]+)[ ]+([0-9]+)[ ]*$")
+# kreg5 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]*$")
+# kreg6 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]*$")
+# kreg7 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([^-. 0-9]+)[ ]+([0-9]+)[ ]*$")
+# kreg8 = re.compile(r"^[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([^ ]+)[ ]+([0-9]+)[ ]*$")
 
 bssign = "STARTB"
 besign = "FINALB"
 breg1 = re.compile(r"^([0-9]+)BBGN$")
 breg2 = re.compile(r"^([0-9]+)BEND$")
 breg3 = re.compile(r"^[ ]+([0-9]+)R[ ]+([^ ]+)[ ]+H([0-9]+)m.*$")
-breg4 = re.compile(r"^[ ]+([1-6])[ ]+([0-9]{4})([^-. 0-9]{1,4})([0-9]{2})([^-. 0-9]{1,2})([0-9]{2})([A-Z0-9]{2})[ ]+([.0-9]+)[ ]+([.0-9]+)[ ]+([.0-9]+)[ ]+([.0-9]+)[ ]+([0-9]+)[ ]+([.0-9]+)[ ]+([0-9]+)[ ]+([.0-9]+)[ ]+(.*)$")
+breg4 = re.compile(r"^[ ]*([1-6])[ ]+([0-9]{4})([^-. 0-9]{1,4})([0-9]{2})([^-. 0-9]{1,2})([0-9]{2})([A-Z0-9]{2})[ ]+([.0-9]+)[ ]+([.0-9]+)[ ]+([.0-9]+)[ ]+([.0-9]+)[ ]+([0-9]+)[ ]+([.0-9]+)[ ]+([0-9]+)[ ]+([.0-9]+)[ ]+(.*)$")
 
 svlfmt = "{0} qid:{1} 1:{2} 2:{3} 3:{4} 4:{5} 5:{6} 6:{7} 7:{8} 8:{9} 9:{10} 10:{11} 11:{12} 12:{13} 13:{14} 14:{15} 15:{16} 16:{17} 17:{18} 18:{19} 19:{20} 20:{21} 21:{22} 22:{23}"
 
@@ -47,22 +48,22 @@ RANKLABEL = [v for v in range(5, -1, -1)]
 class Race:
 
     def __init__(self, ids, place, kinds, number, around):
-        self.ids = ids # one_hot
-        self.place = place # one_hot
-        self.kinds = kinds # one_hot
-        self.number = number # one_hot
-        self.around = around # double
-        self.weather = 0 # one_hot
-        self.wind_direction = 0 # one_hot
-        self.wind = 0 # double
-        self.wave = 0 # double
+        self.ids = ids 
+        self.place = place
+        self.kinds = kinds
+        self.number = number
+        self.around = around
+        self.weather = 0
+        self.wind_direction = 0
+        self.wind = 0
+        self.wave = 0
         self.curses = [] 
 
     def set_weather(self, weather, wind_direction, wind, wave):
-        self.weather = weather # one_hot
-        self.wind_direction = wind_direction # one_hot
-        self.wind = wind # double
-        self.wave = wave # double
+        self.weather = weather
+        self.wind_direction = wind_direction
+        self.wind = wind
+        self.wave = wave
 
     def append_curse(self, curse):
         self.curses.append(curse)
@@ -82,30 +83,33 @@ class Race:
 class Curse:
 
     def __init__(self, number, mortor, boat, racer):
-        self.number = number # one_hot
-        self.mortor = mortor # double
-        self.boat = boat # double
+        self.number = number
+        self.mortor = mortor
+        self.boat = boat
         self.racer = racer
         self.ranking = -1
 
     def set_ranking(self, ranking):
         self.ranking = ranking
 
+    def set_number(self, number):
+        self.number = number
+
 class Racer:
 
     def __init__(self, ids, name, age, weight, base, group, rate1, rate2, rate3, rate4, report, other):
-        self.ids = ids # one_hot
-        self.name = name # no use
-        self.age  = age # double
-        self.weight = weight # double
-        self.base = base # one_hot
-        self.group = group # one_hot
-        self.rate1 = rate1 # double
-        self.rate2 = rate2 # double
-        self.rate3 = rate3 # double
-        self.rate4 = rate4 # double
-        self.report = report # list:double
-        self.other = other # one_hot
+        self.ids = ids
+        self.name = name
+        self.age  = age
+        self.weight = weight
+        self.base = base
+        self.group = group
+        self.rate1 = rate1
+        self.rate2 = rate2
+        self.rate3 = rate3
+        self.rate4 = rate4
+        self.report = report
+        self.other = other
 
 def download_all(ddir):
     if not os.path.exists(ddir):
@@ -179,17 +183,18 @@ def parse_bfile(filepath):
                     if matched:
                         rnum = to_number(matched.group(1))
                         rids = filepref[1:] + str(plcode) + str(rnum)
-                        st = matched.group(2)
-                        if st.index("準") >= 0:
-                            kinds = 2
-                        elif st.index("優"):
-                            kinds = 1
-                        elif st.index("予"):
-                            kinds = 3
-                        elif st.index("一般"):
-                            kinds = 4
-                        else:
-                            kinds = 5
+                        kinds = matched.group(2)
+                        # st = matched.group(2)
+                        # if st.index("準") >= 0:
+                        #     kinds = 2
+                        # elif st.index("優"):
+                        #     kinds = 1
+                        # elif st.index("予"):
+                        #     kinds = 3
+                        # elif st.index("一般"):
+                        #     kinds = 4
+                        # else:
+                        #     kinds = 5
                         around = matched.group(3)
                         race = Race(rids, plcode, kinds, rnum, around)
                         races.append(race)
@@ -210,9 +215,21 @@ def parse_bfile(filepath):
                             rate4 = to_number(matched.group(11))
                             mortor = to_number(matched.group(13))
                             boat = to_number(matched.group(15))
-                            # TODO:
-                            report = [to_number(matched.group(16)), to_number(matched.group(17))]
-                            other = matched.group(18)
+                            lest = matched.group(16)
+                            other = ""
+                            if len(lest) > 12:
+                                other = lest[12:].strip()
+                            if not other:
+                                other = "-"
+                            report = [0 for _ in range(12)]
+                            i = 0
+                            for ch in lest:
+                                if i >= 12:
+                                    break
+                                n = to_number(ch, True)
+                                if n > 0:
+                                    report[i] = n
+                                i += 1
                             racer = Racer(ids, name, age, weight, base, group, rate1, rate2, rate3, rate4, report, other)
                             curse = Curse(number, mortor, boat, racer)
                             race.append_curse(curse)
@@ -257,9 +274,12 @@ def parse_kfile(filepath, races):
                             res = to_number(matched.group(1), True)
                             if res <= 6 and res >= 1:
                                 num = to_number(matched.group(2))
-                                curse = [v for _, v in enumerate(race.curses) if v.number == num]
+                                ids = matched.group(3)
+                                curse = [v for _, v in enumerate(race.curses) if v.racer.ids == ids]
                                 if curse:
-                                    curse[0].set_ranking(RANKLABEL[res - 1])
+                                    if curse.number != num:
+                                        curse[0].set_number(num)
+                                    curse[0].set_ranking(res)
 
 def gen_datafiles(races, sdir):
 
@@ -269,41 +289,53 @@ def gen_datafiles(races, sdir):
         if lst:
             table.append(lst)
 
-    # Standardization
-    # * Race.around
-    # * Race.wind
-    # * Race.wave
-    # * Curse.motor
-    # * Curse.boat
-    # * Racer.age
-    # * Racer.weight
-    # * Racer.rate1
-    # * Racer.rate2
-    # * Racer.report dim & value
-    change_scale(table, 5)
-    change_scale(table, 8)
-    change_scale(table, 9)
-    change_scale(table, 11)
-    change_scale(table, 12)
-    change_scale(table, 14)
-    change_scale(table, 15)
-    change_scale(table, 18)
-    change_scale(table, 19)
-    change_scale(table, 20)
-    change_scale(table, 21)
-    change_scale(table, 22)
-
-    # change one hot
-    # * Kinds
-    # * Weather
-    # * Wind Direction
-    # * Base Place
-    # * Group(Class)
+    # 0:curse.ranking        :reverse
+    change_ranking(table, 0)
+    # 1:self.ids             :
+    # 2:self.place           :one hot
+    change_one_hot(table, 2)
+    # 3:self.number          :one hot
+    change_one_hot(table, 3)
+    # 4:self.kinds           :one hot
     change_one_hot(table, 4)
+    # 5:self.around          :scale
+    change_scale(table, 5)
+    # 6:self.weather         :one hot
     change_one_hot(table, 6)
+    # 7:self.wind_direction  :one hot
     change_one_hot(table, 7)
+    # 8:self.wind            :scale
+    change_scale(table, 8)
+    # 9:self.wave            :scale
+    change_scale(table, 9)
+    # 10:curse.number        :one hot
+    change_one_hot(table, 10)
+    # 11:curse.mortor        :scale
+    change_scale(table, 11)
+    # 12:curse.boat          :scale
+    change_scale(table, 12)
+    # 13:curse.racer.id      :one hot
+    change_one_hot(table, 13)
+    # 14:curse.racer.age     :one hot
+    change_one_hot(table, 14)
+    # 15:curse.racer.weight  :one hot
+    change_one_hot(table, 15)
+    # 16:curse.racer.base    :one hot
     change_one_hot(table, 16)
+    # 17:curse.racer.group   :one hot
     change_one_hot(table, 17)
+    # 18:curse.racer.rate1   :scale
+    change_scale(table, 18)
+    # 19:curse.racer.rate2   :scale
+    change_scale(table, 19)
+    # 20:curse.racer.rate3   :scale
+    change_scale(table, 20)
+    # 21:curse.racer.rate4   :scale
+    change_scale(table, 21)
+    # 22:curse.racer.report  :each reverse
+    change_grade(table, 22)
+    # 23:curse.racer.other   :one hot
+    change_one_hot(table, 23)
 
     train1, test = train_test_split(table, test_size = 0.15)
     train2, valid = train_test_split(train1, test_size = len(test))
@@ -343,6 +375,8 @@ def to_number(st, integer = False):
 def change_one_hot(table, num):
     cols = [row[num] for tg in table for row in tg]
     grps = list(set(cols))
+    print("----- Column = " + str(num) + " -----")
+    print(grps)
     grps.sort()
     maxl = len(grp)
     for tg in table:
@@ -370,13 +404,63 @@ def change_scale(table, num):
             table[i][num] = newcols[i]
             i += 1
 
+def change_ranking(table, num):
+    for tg in table:
+        for row in tg:
+            ranking = row[num]
+            if ranking >= 1 and ranking <= 6:
+                row[num] = RANKLABEL[ranking - 1]
+            else:
+                row[num] = 0
+
+def change_grade(table, num):
+    for tg in table:
+        for row in tg:
+            ranking = row[num]
+            for i, v in enumerate(ranking):
+                if v >= 1 and v <= 6:
+                    ranking[i] = RANKLABEL[v - 1] / 6.0
+                else:
+                    ranking[i] = 0
+
 #==============================================================================
 
 def run():
-    download_all(downdir)
-    races = parse_all(downdir)
-    if races:
-        gen_datafiles(races, outdir)
+
+    if len(sys.argv) <= 1:
+        return
+
+    dodown = False
+    dopars = False
+    idir = donwdir
+    odir = outdir
+
+    i = 1
+    while i < len(sys.argv):
+        v = sys.argv[i]
+        if v == "-d":
+            dodown = True
+        elif v == "-p":
+            dopars = True
+        elif v == "-i":
+            if i + 1 == len(sys.argv):
+                return
+            idir = sys.argv[i + 1]
+            i += 1
+        elif v == "-o":
+            if i + 1 == len(sys.argv):
+                return
+            odir = sys.argv[i + 1]
+            i += 1
+        i += 1
+
+    if dodown:
+        download_all(idir)
+
+    if dopars:
+        races = parse_all(idir)
+        if races:
+            gen_datafiles(races, odir)
 
 if __name__ == '__main__':
     run()
