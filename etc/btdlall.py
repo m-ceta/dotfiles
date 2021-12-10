@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 import sys
 import os
 import os.path
@@ -6,13 +5,16 @@ import re
 import time
 import lhafile
 import traceback
+import datetime
 import urllib.request
 import pandas as pd
 from sklearn.preprocessing import StandardScaler,MinMaxScaler
 from sklearn.model_selection import train_test_split
+from bs4 import BeautifulSoup
 
-downdir = "data"
-outdir = "train"
+burl = "https://www.boatrace.jp/owpc/pc/race/beforeinfo?rno={0}&jcd={1}&hd={2}"
+wreg1 = re.compile(r"weather.*is-wind([0-9]+)")
+wreg2 = re.compile(r"([0-9]+).*")
 
 ksavfile = downdir + "/k{0}{1:02}{2:02}.lzh"
 kurlbase = "http://www1.mbrace.or.jp/od2/K/{0}{1:02}/"
@@ -44,6 +46,7 @@ ZEN = "".join(chr(0xff01 + i) for i in range(94)) + "　"
 HAN = "".join(chr(0x21 + i) for i in range(94)) + " "
 ZEN2HAN = str.maketrans(ZEN, HAN)
 RANKLABEL = [v for v in range(5, -1, -1)]
+WINDLABEL = ["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西","無風"]
 
 class Race:
 
@@ -122,10 +125,16 @@ def download_all(ddir):
                 kurl = kurlbase.format(sty, m) + ksav
                 time.sleep(1)
                 if download(kurl, ksav, ddir):
+                    print("url: {0}, sav: {1} --> OK".format(kurl, ksav))
                     bsav = bsavfile.format(sty[2:], m, d)
-                    burl = burlbase.format(sty, m) + ksav
+                    burl = burlbase.format(sty, m) + bsav
                     time.sleep(1)
-                    download(burl, bsav, ddir)
+                    if download(burl, bsav, ddir):
+                        print("url: {0}, sav: {1} --> OK".format(burl, bsav))
+                    else:
+                        print("url: {0}, sav: {1} --> NG".format(burl, bsav))
+                else:
+                    print("url: {0}, sav: {1} --> NG".format(kurl, ksav))
 
 def download(url, sav, ddir):
     try:
@@ -153,6 +162,7 @@ def parse_all(ddir):
             if races:
                 parse_kfile(kfilepath, races)
                 races_all.append(races)
+                print("file: {0}, {1} --> Done".format(bfilepath, kfilepath))
     return races_all
 
 def parse_bfile(filepath):
@@ -184,17 +194,6 @@ def parse_bfile(filepath):
                         rnum = to_number(matched.group(1))
                         rids = filepref[1:] + str(plcode) + str(rnum)
                         kinds = matched.group(2)
-                        # st = matched.group(2)
-                        # if st.index("準") >= 0:
-                        #     kinds = 2
-                        # elif st.index("優"):
-                        #     kinds = 1
-                        # elif st.index("予"):
-                        #     kinds = 3
-                        # elif st.index("一般"):
-                        #     kinds = 4
-                        # else:
-                        #     kinds = 5
                         around = matched.group(3)
                         race = Race(rids, plcode, kinds, rnum, around)
                         races.append(race)
@@ -236,6 +235,10 @@ def parse_bfile(filepath):
     return races
 
 def parse_kfile(filepath, races):
+
+    if not races:
+        return
+
     filename = os.path.basename(filepath)
     filepref = os.path.splitext(filename)[0]
     start = False
@@ -263,10 +266,11 @@ def parse_kfile(filepath, races):
                         rids = filepref[1:] + str(plcode) + str(rnum)
                         race = [v for _, v in enumerate(races) if v.ids == rids]
                         if race:
+                            weather = matched.group(4)
                             wdir = matched.group(5)
                             wind = to_number(matched.group(6))
                             wave = to_number(matched.group(7))
-                            race[0].set_weather(wdir, wind, wave)
+                            race[0].set_weather(weather, wdir, wind, wave)
                         continue
                     if race:
                         matched = kreg4.match(line)
@@ -281,7 +285,71 @@ def parse_kfile(filepath, races):
                                         curse[0].set_number(num)
                                     curse[0].set_ranking(res)
 
-def gen_datafiles(races, sdir):
+def get_weather(races):
+
+    if not races:
+        return
+
+    today = datetime.date.today().strftime("%Y%m%d")
+
+    weather = ""
+    wind = ""
+    wind_direction = ""
+    wave = ""
+
+    for race in races:
+        time.sleep(1)
+        url = burl.format(race.number, race.place, today)
+        try:
+            response = urllib.request.urlopen(url)
+            content = response.read()
+            response.close()
+            html = content.decode()
+            soup = BeautifulSoup(html, "lxml")
+            weather_div = soup.find("div", class="weather1_bodyUnit is-weather")
+            if weather_div:
+                label_div = weather_div.find("div", class="weather1_bodyUnitLabel")
+                if label_div:
+                    data_span = label_div.find("span", class="weather1_bodyUnitLabelTitle")
+                    if data_span:
+                        weather = data_span.text
+            winddir_div = soup.find("div", class="weather1_bodyUnit is-windDirection")
+            if winddir_div:
+                image_p = winddir_div.find("p")
+                if image_p:
+                    clstxt = image_p.attrs["class"]
+                    matched = wreg1.match(clstxt)
+                    if matched:
+                        num = to_number(matched.group(1))
+                        if num >= 1 and num <= 17:
+                            wind_direction = WINDLABEL[num - 1]
+            wind_div = soup.find("div", class="weather1_bodyUnit is-wind")
+            if wind_div:
+                label_div = weather_div.find("div", class="weather1_bodyUnitLabel")
+                if label_div:
+                    data_span = label_div.find("span", class="weather1_bodyUnitLabelData")
+                    if data_span:
+                        matched = wreg2.match(data_span.text)
+                        if matched:
+                            wind = to_number(matched.group(1))
+            wave_div = soup.find("div", class="weather1_bodyUnit is-wave")
+            if wave_div:
+                label_div = weather_div.find("div", class="weather1_bodyUnitLabel")
+                if label_div:
+                    data_span = label_div.find("span", class="weather1_bodyUnitLabelData")
+                    if data_span:
+                        matched = wreg2.match(data_span.text)
+                        if matched:
+                            wave = to_number(matched.group(1))
+
+            race.set_weather(weather, wind_direction, wind, wave)
+
+        except:
+            traceback.print_exc()
+
+def gen_datatable(races, sdir = None):
+    if not races:
+        return
 
     table = []
     for race in races:
@@ -293,37 +361,42 @@ def gen_datafiles(races, sdir):
     change_ranking(table, 0)
     # 1:self.ids             :
     # 2:self.place           :one hot
-    change_one_hot(table, 2)
+    change_one_hot(table, 2, sdir)
     # 3:self.number          :one hot
-    change_one_hot(table, 3)
+    change_one_hot(table, 3, sdir)
     # 4:self.kinds           :one hot
-    change_one_hot(table, 4)
+    change_one_hot(table, 4, sdir)
     # 5:self.around          :scale
     change_scale(table, 5)
     # 6:self.weather         :one hot
-    change_one_hot(table, 6)
+    change_one_hot(table, 6, sdir)
     # 7:self.wind_direction  :one hot
-    change_one_hot(table, 7)
+    # change_one_hot(table, 7, sdir)
+    for tg in table:
+        for row in tg:
+            idx = WINDLABEL.index(row[7])
+            if idx >= 0:
+                row[7] = gen_one_hot_vec(idx, 17)
     # 8:self.wind            :scale
     change_scale(table, 8)
     # 9:self.wave            :scale
     change_scale(table, 9)
     # 10:curse.number        :one hot
-    change_one_hot(table, 10)
+    change_one_hot(table, 10, sdir)
     # 11:curse.mortor        :scale
     change_scale(table, 11)
     # 12:curse.boat          :scale
     change_scale(table, 12)
     # 13:curse.racer.id      :one hot
-    change_one_hot(table, 13)
+    change_one_hot(table, 13, sdir)
     # 14:curse.racer.age     :one hot
-    change_one_hot(table, 14)
+    change_one_hot(table, 14, sdir)
     # 15:curse.racer.weight  :one hot
-    change_one_hot(table, 15)
+    change_one_hot(table, 15, sdir)
     # 16:curse.racer.base    :one hot
-    change_one_hot(table, 16)
+    change_one_hot(table, 16, sdir)
     # 17:curse.racer.group   :one hot
-    change_one_hot(table, 17)
+    change_one_hot(table, 17, sdir)
     # 18:curse.racer.rate1   :scale
     change_scale(table, 18)
     # 19:curse.racer.rate2   :scale
@@ -335,7 +408,14 @@ def gen_datafiles(races, sdir):
     # 22:curse.racer.report  :each reverse
     change_grade(table, 22)
     # 23:curse.racer.other   :one hot
-    change_one_hot(table, 23)
+    change_one_hot(table, 23, sdir)
+
+    return table
+
+def create_train_file(table, sdir):
+
+    if not table:
+        return
 
     train1, test = train_test_split(table, test_size = 0.15)
     train2, valid = train_test_split(train1, test_size = len(test))
@@ -372,18 +452,36 @@ def to_number(st, integer = False):
     except:
         return -1
 
-def change_one_hot(table, num):
-    cols = [row[num] for tg in table for row in tg]
-    grps = list(set(cols))
-    print("----- Column = " + str(num) + " -----")
-    print(grps)
-    grps.sort()
-    maxl = len(grp)
-    for tg in table:
-        for row in tg:
-            col = row[num]
-            idx = grps.index(col)
-            row[num] = gen_one_hot_vec(idx, maxl)
+def change_one_hot(table, num, sdir):
+    filepath = os.path.join(sdir, str(num) + ".dat")
+    grps = None
+    if os.path.isfile(filepath):
+        grps = load_one_hot_group(filepath)
+    if not grps:
+        cols = [row[num] for tg in table for row in tg]
+        grps = list(set(cols))
+        save_one_hot_group(grps, filepath)
+    if grps:
+        grps.sort()
+        maxl = len(grps)
+        for tg in table:
+            for row in tg:
+                col = row[num]
+                idx = grps.index(col)
+                row[num] = gen_one_hot_vec(idx, maxl)
+
+def save_one_hot_group(groups, filepath):
+    with open(filepath, "wt", encoding = "utf_8") as f:
+        f.write(os.linesep.join(groups))
+
+def load_one_hot_group(filepath):
+    groups = []
+    with open(filepath, "rt", encoding = "utf_8") as f:
+        for line in f.readlines():
+            data = line.strip()
+            if data:
+                groups.append(data)
+    return groups
 
 def gen_one_hot_vec(idx, length):
     vec = []
@@ -425,23 +523,46 @@ def change_grade(table, num):
 
 #==============================================================================
 
+def download_all_test(ddir):
+    if not os.path.exists(ddir):
+        os.mkdir(ddir)
+    for y in (1998, 2010, 2020):
+        sty = str(y)
+        for m in (1, 6, 12):
+            for d in (1, 15):
+                ksav = ksavfile.format(sty[2:], m, d)
+                kurl = kurlbase.format(sty, m) + ksav
+                time.sleep(1)
+                print("url: {0}, sav: {1}".format(kurl, ksav))
+                if download(kurl, ksav, ddir):
+                    bsav = bsavfile.format(sty[2:], m, d)
+                    burl = burlbase.format(sty, m) + ksav
+                    time.sleep(1)
+                    print("url: {0}, sav: {1}".format(burl, bsav))
+                    download(burl, bsav, ddir)
+
 def run():
 
     if len(sys.argv) <= 1:
         return
 
-    dodown = False
-    dopars = False
-    idir = donwdir
+    downall = False
+    gentrain = False
+    genpdict = False
+    idir = downdir
     odir = outdir
+    rnum = 0
+    pnum = ""
 
     i = 1
     while i < len(sys.argv):
         v = sys.argv[i]
         if v == "-d":
-            dodown = True
+            downall = True
+        elif v == "-t":
+            gentrain = True
         elif v == "-p":
-            dopars = True
+            genpdict = True
         elif v == "-i":
             if i + 1 == len(sys.argv):
                 return
@@ -452,15 +573,47 @@ def run():
                 return
             odir = sys.argv[i + 1]
             i += 1
+        elif v == "-pr":
+            if i + 1 == len(sys.argv):
+                return
+            rnum = to_number(sys.argv[i + 1])
+            i += 1
+        elif v == "-pp":
+            if i + 1 == len(sys.argv):
+                return
+            pnum = sys.argv[i + 1]
+            i += 1
         i += 1
 
-    if dodown:
-        download_all(idir)
+    if downall:
+        download_all_test(idir)
 
-    if dopars:
+    if gentrain:
         races = parse_all(idir)
         if races:
-            gen_datafiles(races, odir)
+            create_train_file(gen_datatable(races), odir)
+
+    if genpdict and rnum > 0 and pnum:
+        today = datetime.date.today() 
+        y1 = today.strftime("%Y")
+        y2 = today.strftime("%y")
+        m = today.strftime("%m")
+        d = today.strftime("%d")
+        bsav = bsavfile.format(y2, m, d)
+        bsavpath = os.path.join(idir, bsav)
+        if not os.path.isfile(bsavpath):
+            burl = burlbase.format(y1, m) + bsav
+            download(burl, bsav, idir)
+        if os.path.isfile(basvpath):
+            races = parse_bfile(bsavpath)
+            if races:
+                race = [v for v in races if v.place == pnum and v.number == rnum]
+                if race:
+                    get_weather(race)
+                    svfile = os.path.join(odir, "predict.txt")
+                    if os.path.isfile(svfile):
+                        os.remove(svfile)
+                    save_file(gen_datatable(race[0].to_list(), odir), svfile)
 
 if __name__ == '__main__':
     run()
