@@ -59,7 +59,7 @@ def update_json_settings(dir_json, dir_rdata, dir_out, vali_k, cutoffs):
     data_eva_sf_settings = {
       "DataSetting": {
         "data_id":data_id,
-        "dir_data":dir_data,
+        "dir_data":dir_rdata,
         "min_docs":[4],
         "min_rele":[0],
         "train_batch_size":[1],
