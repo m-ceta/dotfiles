@@ -8,11 +8,12 @@ import json
 dir_home = os.environ['HOME']
 dir_ptr = os.path.join(dir_home, "ptranking")
 data_id = "BTR2021"
+num_features = 188
 sys.path.append(dir_ptr)
 import ptranking.data.data_utils
 # ===============================================================
 def my_get_data_meta(data_id=None):
-    data_meta = dict(num_features=10181, has_comment=False, 
+    data_meta = dict(num_features=num_features, has_comment=False, 
                      label_type=ptranking.data.data_utils.LABEL_TYPE.MultiLabel, 
                      max_rele_level=5, fold_num=5)
     return data_meta
@@ -63,7 +64,7 @@ def update_json_settings(dir_json, dir_rdata, dir_out, vali_k, cutoffs):
         "min_docs":[4],
         "min_rele":[0],
         "train_batch_size":[1],
-        "num_features":188,
+        "num_features":num_features,
         "has_comment":[False],
         "fold_num":[5],
         "scale_data":[True],
