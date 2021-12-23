@@ -3,18 +3,18 @@ import os
 import os.path
 import re
 import time
+import math
 import lhafile
 import traceback
 import datetime
 import pathlib
 import codecs
-import random
 import csv
-import copy
 import urllib.request
 import pandas as pd
+import numpy as np
 import sklearn.datasets
-from sklearn.preprocessing import StandardScaler,MinMaxScaler
+from sklearn.preprocessing import minmax_scale
 from sklearn.model_selection import train_test_split
 from bs4 import BeautifulSoup
 
@@ -56,10 +56,16 @@ HAN = "".join(chr(0x21 + i) for i in range(94)) + " "
 ZEN2HAN = str.maketrans(ZEN, HAN)
 RANKLABEL = [v for v in range(5, -1, -1)]
 WINDLABEL = ["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西","無風"]
-RACERLABEL = [str(v).zfill(4) for v in range(1, 10000)]
 AGELABEL = [(v, v + 5) for v in range(15, 80, 5)]
-WEATHERLABEL = ["晴", "雨", "雪", "曇"]
+WEATHERLABEL = [["晴", "はれ"], ["雨", "あめ"], ["雪", "ゆき"], ["曇", "くもり"], ["霧", "きり"], ["他", "ほか", "た"]]
 KINDLABEL = ["予選", "準優", "優勝", "順位決定", "選抜", "一般"]
+PLACLABEL = [v for v in range(1, 25)]
+RCNMLABEL = [v for v in range(1, 13)]
+CSNMLABEL = [v for v in range(1, 7)]
+RCRWLABEL = [v for v in range(35, 65)]
+RCRBLABEL = ["東京", "香川", "佐賀", "熊本", "広島", "大阪", "愛知", "徳島", "福岡", "静岡", "山口", "岡山", "埼玉", "長崎", "兵庫", "島根", "栃木", "高知", "三重", "千葉", "神奈", "群馬", "和歌", "石川", "滋賀", "京都", "愛媛", "福井", "山梨", "富山", "鹿児", "茨城", "宮崎", "宮城", "大分", "奈良", "岐阜", "沖縄", "北海", "秋田", "青森", "福島", "長野", "新潟", "鳥取"]
+RCRGLABEL = ["A1", "A2", "B1", "B2"]
+#RACERLABEL = [str(v).zfill(4) for v in range(1, 10000)]
 
 class Race:
 
@@ -512,10 +518,9 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
 
     return True
 
-def gen_datatable(races, sdir):
+def to_table(races):
     if not races:
         return
-
     table = []
     for race in races:
         lst = race.to_list()
@@ -523,162 +528,107 @@ def gen_datatable(races, sdir):
             table.append(lst)
             if len(lst) < 6:
                 print(lst[0][1])
-    table_src = []
-    table_src.extend(copy.deepcopy(table))
+    return table
+
+def normalize(csv_path, sdir):
+
+    if not os.path.isfile(csv_path):
+        return
+    df = pd.read_csv(csv_path)
 
     # 0:curse.ranking        :reverse
-    change_ranking(table, 0)
+    df["rank"] = df["rank"].apply(lambda x: RANKLABEL[x - 1] if x >= 1 and x <= 6 else 0)
     # 1:self.ids             :
     # 2:self.place           :one hot
-    change_one_hot(table, 2, sdir)
+    df["place"] = df["place"].apply(lambda x: get_vector(x, PLACLABEL))
     # 3:self.number          :one hot
-    change_one_hot(table, 3, sdir)
+    df["race_number"] = df["race_number"].apply(lambda x: get_vector(x, RCNMLABEL))
     # 4:self.kinds           :one hot
-    for tg in table:
-        for row in tg:
-            stkind = str(row[4]).replace(" ", "")
-            idx = len(KINDLABEL) 
-            for i, v in enumerate(KINDLABEL):
-                if stkind.find(v) >= 0:
-                    idx = i
-                    break
-            row[4] = gen_one_hot_vec(idx, len(KINDLABEL) + 1)
+    df["race_type"] = df["race_type"].apply(lambda x: get_vector(x, KINDLABEL))
     # 5:self.weather         :one hot
-    for tg in table:
-        for row in tg:
-            stwth = str(row[5]).strip().strip("　")
-            idx = -1
-            for i, v in enumerate(WEATHERLABEL):
-                if stwth.find(v) >= 0:
-                    idx = i
-                    break
-            if idx < 0:
-                print("Change one hot error! GRP:{0}, ROW:{1}, TARGET:{2}".format(5, row, stwth))
-                continue
-            else:
-                row[5] = gen_one_hot_vec(idx, len(WEATHERLABEL))
+    df["weather"] = df["weather"].apply(lambda x: get_vector(x, WEATHERLABEL))
     # 6:self.wind_direction  :one hot
-    for tg in table:
-        for row in tg:
-            stwd = str(row[6]).strip().strip("　")
-            if not stwd in WINDLABEL:
-                print("Change one hot error! GRP:{0}, ROW:{1}, TARGET:{2}".format(6, row, stwd))
-                continue
-            idx = WINDLABEL.index(stwd)
-            if idx >= 0:
-                row[6] = gen_one_hot_vec(idx, 17)
+    df["wind_direction"] = df["wind_direction"].apply(lambda x: get_vector(x, WINDLABEL))
     # 7:self.wind            :scale
-    change_scale(table, 7)
+    df["wind"] = minmax_scale(df["wind"])
     # 8:self.wave            :scale
-    change_scale(table, 8)
+    df["wave"] = minmax_scale(df["wave"])
     # 9:curse.number        :one hot
-    change_one_hot(table, 9, sdir)
+    df["curse_number"] = df["curse_number"].apply(lambda x: get_vector(x, CSNMLABEL))
     # 10:curse.mortor        :scale
-    change_scale(table, 10)
+    df["mortor"] = minmax_scale(df["mortor"])
     # 11:curse.boat          :scale
-    change_scale(table, 11)
+    df["boat"] = minmax_scale(df["boat"])
     # 12:curse.stime         :scale
-    change_scale(table, 12)
+    df["start_time"] = minmax_scale(df["start_time"])
     # 13:curse.extime         :scale
-    change_scale(table, 13)
+    df["exhibition_time"] = minmax_scale(df["exhibition_time"])
     # 14:curse.racer.ids     :one hot
-    for tg in table:
-        for row in tg:
-            strid = str(row[14]).strip().strip("　")
-            if not strid in RACERLABEL:
-                print("Change one hot error! GRP:{0}, ROW:{1}, TARGET:{2}".format(14, row, strid))
-                continue
-            idx = RACERLABEL.index(strid)
-            if idx >= 0:
-                row[14] = gen_one_hot_vec(idx, len(RACERLABEL))
+    # df["racer_id"] = df["racer_id"].apply(lambda x: get_vector(x, RACERLABEL))
+    df.drop("racer_id", axis=1)
     # 15:curse.racer.age     :one hot
-    for tg in table:
-        for row in tg:
-            strage = str(row[15]).strip().strip("　")
-            age = to_number(strage)
-            idx = -1
-            for i, v in enumerate(AGELABEL):
-                if v[0] <= age and v[1] >= age:
-                    idx = i
-                    break
-            if idx < 0:
-                print("Change one hot error! GRP:{0}, ROW:{1}, TARGET:{2}".format(15, row, stwth))
-                continue
-            else:
-                row[15] = gen_one_hot_vec(idx, len(AGELABEL))
+    df["racer_age"] = df["racer_age"].apply(lambda x: get_vector(x, AGELABEL))
     # 16:curse.racer.weight  :one hot
-    change_one_hot(table, 16, sdir)
+    df["racer_weight"] = df["racer_weight"].apply(lambda x: get_vector(x, RCRWLABEL))
     # 17:curse.racer.base    :one hot
-    change_one_hot(table, 17, sdir)
+    df["racer_base"] = df["racer_base"].apply(lambda x: get_vector(x, RCRBLABEL))
     # 18:curse.racer.group   :one hot
-    change_one_hot(table, 18, sdir)
+    df["racer_grade"] = df["racer_grade"].apply(lambda x: get_vector(x, RCRGLABEL))
     # 19:curse.racer.rate1   :scale
-    change_scale(table, 19)
+    df["racer_rate1"] = minmax_scale(df["racer_rate1"])
     # 20:curse.racer.rate2   :scale
-    change_scale(table, 20)
+    df["racer_rate2"] = minmax_scale(df["racer_rate2"])
     # 21:curse.racer.rate3   :scale
-    change_scale(table, 21)
+    df["racer_rate3"] = minmax_scale(df["racer_rate3"])
     # 22:curse.racer.rate4   :scale
-    change_scale(table, 22)
+    df["racer_rate4"] = minmax_scale(df["racer_rate4"])
     # 23:curse.racer.report  :each reverse
-    change_grade(table, 23)
+    btcols = ["recent_battle_record" + str(i + 1) for i in range(12)]
+    df[btcols[0]] = minmax_scale(df[btcols].apply(calc_condition, axis = 1))
+    df = df.drop(btcols[1:], axis=1)
     # 24:curse.racer.other   :one hot
-    change_one_hot(table, 24, sdir)
+    df["racer_other_participation"] = df[["racer_other_participation","race_number"]].apply(lambda x: get_vector(calc_status(x), [0, 1, 2]), axis = 1)
 
-    return table, table_src
 
-def create_train_file(table, sdir):
+    print("--- Normalized DataFrame ---")
+    print(df)
 
-    if not table:
-        return
+    return df
 
-    random.shuffle(table)
+def create_train_file(df, sdir, foldk):
+    qid = df["id"].drop_duplicates().sample(frac=1).to_numpy()
+    tra1_qid, test_qid = train_test_split(qid, test_size = 0.15)
+    tra2_qid, vali_qid = train_test_split(tra1_qid, test_size = len(test_qid))
+    fold_dir = os.path.join(sdir, "Fold" + str(foldk))
+    if not os.path.exists(fold_dir):
+        os.mkdir(fold_dir)
+    print("<Train>")
+    save_file(df[df["id"].isin(tra2_qid)], os.path.join(fold_dir, "train.txt"))
+    print("<Test>")
+    save_file(df[df["id"].isin(test_qid)], os.path.join(fold_dir, "test.txt"))
+    print("<Validation>")
+    save_file(df[df["id"].isin(vali_qid)], os.path.join(fold_dir, "vali.txt"))
 
-    count_all = len(table)
-    fold1 = int(round(count_all * 0.2))
-    folds = [\
-                table[:fold1], \
-                table[fold1:fold1*2], \
-                table[fold1*2:fold1*3], \
-                table[fold1*3:fold1*4], \
-                table[fold1*4:]\
-            ]
-
-    for i, fold in enumerate(folds):
-
-        fold_dir = os.path.join(sdir, "Fold" + str(i + 1))
-        if not os.path.exists(fold_dir):
-            os.mkdir(fold_dir)
-
-        count_fold = len(fold)
-        count_test = int(round(count_fold * 0.15))
-        test = fold[:count_test]
-        train1 = fold[count_test:]
-        valid = train1[:count_test]
-        train2 = train1[count_test:]
-
-        test_file = os.path.join(fold_dir, "test.txt")
-        train1_file = os.path.join(fold_dir, "train_no_vali.txt")
-        train2_file = os.path.join(fold_dir, "train.txt")
-        valid_file = os.path.join(fold_dir, "vali.txt")
-        save_file(test, test_file)
-        save_file(train1, train1_file)
-        save_file(train2, train2_file)
-        save_file(valid, valid_file)
-
-def save_file(table, filepath):
-    X = []
-    y = []
-    qid = []
-    for tg in table:
-        for row in tg:
-            y.append(row[0])
-            qid.append(int(row[1]))
-            X.append(flatten(row[2:]))
+def save_file(df, filepath):
+    print("Save File: " + filepath)
+    print("--- Save Target DataFrame(ALL) ---")
+    print(df)
+    X = df.iloc[:,2:].apply(lambda x: flatten(x), axis=1).to_numpy().tolist()
+    print("--- Save Target DataFrame(X) ---")
+    print(X)
+    y = df.iloc[:,0].to_numpy()
+    print("--- Save Target DataFrame(y) ---")
+    print(y)
+    qid = df.iloc[:,1].to_numpy()
+    print("--- Save Target DataFrame(qid) ---")
+    print(qid)
     with open(filepath, "wb") as f:
         sklearn.datasets.dump_svmlight_file(X, y, f, zero_based=False, query_id=qid)
 
 def save_file_as_csv(table, filepath):
+    print("Save File: " + filepath)
+    print("--- Save Target Csv Data ---")
+    print(table)
     with open(filepath, 'wt', newline="") as f:
         writer = csv.writer(f)
         writer.writerow(csvhead)
@@ -695,25 +645,28 @@ def to_number(st, integer = False):
     except:
         return -1
 
-def change_one_hot(table, num, sdir):
-    grps = None
-    filepath = os.path.join(sdir, str(num) + ".dat")
-    if os.path.isfile(filepath):
-        grps = load_one_hot_group(filepath)
-    if not grps:
-        cols = [str(row[num]).strip().strip("　") for tg in table for row in tg]
-        grps = list(set(cols))
-        save_one_hot_group(grps, filepath)
-    if grps:
-        grps.sort()
-        maxl = len(grps)
-        for tg in table:
-            for row in tg:
-                col = str(row[num]).strip().strip("　")
-                if not col in grps:
-                    print("Change one hot error! GRP:{0}, ROW:{1}, TARGET:{2}".format(num, row, col))
-                idx = grps.index(col)
-                row[num] = gen_one_hot_vec(idx, maxl)
+def get_vector(val, grp):
+    sval = str(val).replace(" ", "").replace("　", "")
+    idx = len(grp)
+    for i, v in enumerate(grp):
+        if type(v) == list:
+            found = False
+            for vv in v:
+                if sval.find(str(vv)) >= 0:
+                    found = True
+                    break
+            if found:
+                idx = i
+                break
+        elif type(v) == tuple:
+            if v[0] <= val and v[1] > val:
+                idx = i
+                break
+        else:
+            if sval.find(str(v)) >= 0:
+                idx = i
+                break
+    return np.array([1 if x == idx else 0 for x in range(len(grp) + 1)])
 
 def save_one_hot_group(groups, filepath):
     with open(filepath, "wt", encoding = "utf_8") as f:
@@ -728,44 +681,51 @@ def load_one_hot_group(filepath):
                 groups.append(data)
     return groups
 
-def gen_one_hot_vec(idx, length):
-    vec = []
-    for i in range(length):
-        if i == idx:
-            vec.append(1)
-        else:
-            vec.append(0)
-    return vec
+def calc_condition(rank_list):
+    cond = 0
+    for i, v in enumerate(rank_list):
+        if v >= 1 and v <= 3:
+            cond += (RANKLABEL[v - 1] + 0.0) * (i + 0.0)
+    return cond
 
-def change_scale(table, num):
-    cols = [[row[num]] for tg in table for row in tg]
-    mmsc = MinMaxScaler()
-    newcols = mmsc.fit_transform(cols)
-    i = 0
-    for tg in table:
-        for row in tg:
-            row[num] = newcols[i][0]
-            i += 1
-
-def change_ranking(table, num):
-    for tg in table:
-        for row in tg:
-            ranking = row[num]
-            if ranking >= 1 and ranking <= 6:
-                row[num] = RANKLABEL[ranking - 1]
+def calc_status(val):
+    status = 0
+    splited = val[0].strip().split()
+    current = np.where(val[1] == 1)[0][0] + 1
+    if current > 0:
+        for item in splited:
+            if status == 2:
+                continue
+            if len(item) == 1:
+                num = to_number(item, integer = True)
+                if current < num:
+                    status = 2
+                elif 0 < num and num < current:
+                    status = 1
+            elif len(item) == 2:
+                num = to_number(item, integer = True)
+                if num > 0 and num <= 12:
+                    if current < num:
+                        status = 2
+                    else:
+                        status = 1
+                else:
+                    num1 = to_number(item[0], integer = True)
+                    num2 = to_number(item[1], integer = True)
+                    num3 = max(num1, num2)
+                    if current < num3:
+                        status = 2
+                    elif 0 < num3 and num3 < current:
+                        status = 1
             else:
-                row[num] = 0
-
-def change_grade(table, num):
-    for tg in table:
-        for row in tg:
-            condition = 0
-            ranking = row[num]
-            for i, v in enumerate(ranking):
-                if v >= 1 and v <= 3:
-                    condition += (RANKLABEL[v - 1] + 0.0) * (i + 0.0)
-            row[num] = condition
-    change_scale(table, num)
+                num1 = to_number(item[0], integer = True)
+                num2 = to_number(item[1:], integer = True)
+                num3 = max(num1, num2)
+                if current < num3:
+                    status = 2
+                elif 0 < num3 and num3 < current:
+                    status = 1
+    return status
 
 flatten = lambda x: [z for y in x for z in (flatten(y) if hasattr(y, '__iter__') and not isinstance(y, str) else (y,))]
 
@@ -789,10 +749,10 @@ def download_all_test(ddir):
                     print("url: {0}, sav: {1}".format(burl, bsav))
                     download(burl, bsav, ddir)
 
-def main(downall = False, gentrain = False, genpdict = False, \
+def main(downall = False, gentrain = False, normalize_data = False, genpdict = False, \
         idir = "", odir = "", rnum = 0, pnum = 0, \
         weather = -1, wind = -1, wind_direction = -1, wave = -1, \
-        curse = [], stime = [], extime = []):
+        curse = [], stime = [], extime = [], split = 5):
 
     if idir:
         p = pathlib.Path(idir)
@@ -808,7 +768,7 @@ def main(downall = False, gentrain = False, genpdict = False, \
         print("Error: No input directory.")
         return False
 
-    if (gentrain or (genpdict and rnum > 0 and pnum)) and not os.path.exists(odir):
+    if (gentrain or (genpdict and rnum > 0 and pnum) or normalize_data) and not os.path.exists(odir):
         print("Error: invalid parameter.")
         return False
 
@@ -820,14 +780,26 @@ def main(downall = False, gentrain = False, genpdict = False, \
     if gentrain:
         races = parse_all(idir)
         if races:
-            table1, table2 = gen_datatable(races, odir)
+            count = len(races)
+            step = int(math.floor(count / (split + 0.0)))
+            for i in range(split):
+                si = int(step * i)
+                ei = si + step 
+                if i == split - 1:
+                    ei = count
+                table = to_table(races[si:ei])
+                allcsv = os.path.join(odir, "all{0}.csv".format(i + 1))
+                if os.path.isfile(allcsv):
+                    os.remove(allcsv)
+                save_file_as_csv(table, allcsv)
 
-            create_train_file(table1, odir)
-
-            allcsv = os.path.join(odir, "all.csv")
+    if normalize_data:
+        for i in range(split):
+            allcsv = os.path.join(idir, "all{0}.csv".format(i + 1))
             if os.path.isfile(allcsv):
-                os.remove(allcsv)
-            save_file_as_csv(table2, allcsv)
+                df = normalize(allcsv, odir)
+                create_train_file(df, odir, i + 1)
+                del(df)
 
     if genpdict and rnum > 0 and pnum:
         today = datetime.date.today() 
@@ -848,15 +820,16 @@ def main(downall = False, gentrain = False, genpdict = False, \
                     if not get_last_info(race, weather, wind_direction, wind, wave, curse, stime, extime):
                         print("Error: Cannot get last info.")
                         return False
-                    table1, table2 = gen_datatable(race[0].to_list(), odir)
-                    svfile = os.path.join(odir, "predict.txt")
-                    if os.path.isfile(svfile):
-                        os.remove(svfile)
-                    save_file(table1, svfile)
+                    table = to_table(race[0].to_list())
                     svcsvfile = os.path.join(odir, "predict.csv")
                     if os.path.isfile(svcsvfile):
                         os.remove(svcsvfile)
-                    save_file_as_csv(table2, svcsvfile)
+                    save_file_as_csv(table, svcsvfile)
+                    normalize(table, odir)
+                    svfile = os.path.join(odir, "predict.txt")
+                    if os.path.isfile(svfile):
+                        os.remove(svfile)
+                    save_file(table, svfile)
 
     return True
 
@@ -867,6 +840,7 @@ def run():
 
     downall = False
     gentrain = False
+    normalize_data = False
     genpdict = False
     idir = ""
     odir = ""
@@ -887,6 +861,8 @@ def run():
             downall = True
         elif v == "-t":
             gentrain = True
+        elif v == "-n":
+            normalize_data = True
         elif v == "-p":
             genpdict = True
         elif v == "-i":
@@ -1047,7 +1023,7 @@ def run():
             i += 1
         i += 1
 
-    main(downall, gentrain, genpdict, idir, odir, rnum, pnum, weather, wind, wind_direction, wave, curse, stime, extime)
+    main(downall, gentrain, normalize_data, genpdict, idir, odir, rnum, pnum, weather, wind, wind_direction, wave, curse, stime, extime)
 
 if __name__ == '__main__':
     run()

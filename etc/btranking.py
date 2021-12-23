@@ -63,7 +63,7 @@ def update_json_settings(dir_json, dir_rdata, dir_out, vali_k, cutoffs):
         "min_docs":[4],
         "min_rele":[0],
         "train_batch_size":[1],
-        "num_features":10181,
+        "num_features":188,
         "has_comment":[False],
         "fold_num":[5],
         "scale_data":[True],
