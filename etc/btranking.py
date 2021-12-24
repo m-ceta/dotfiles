@@ -53,6 +53,59 @@ def my_grid_run(self, model_id, dir_json, vali_k, cutoffs, debug=False):
                  max_cv_avg_scores=max_cv_avg_scores, sf_para_dict=max_sf_para_dict,
                  log_para_str=self.model_parameter.to_para_string(log=True, given_para_dict=max_model_para_dict))
 setattr(LTREvaluator, "grid_run2", my_grid_run)
+
+def my_cross_validation_run(self, data_dict, eval_dict, sf_para_dict, model_para_dict):
+    self.setup_eval(data_dict, eval_dict, sf_para_dict, model_para_dict)
+    fold_num = data_dict['fold_num']
+    ranker = self.load_ranker(model_para_dict=model_para_dict, sf_para_dict=sf_para_dict)
+    losses_folds = []
+    train_ndcgs_folds = []
+    test_ndcgs_folds = []
+    for fold_k in range(1, fold_num + 1):
+        ranker.reset_parameters()
+        train_data, test_data, vali_data = self.load_data(eval_dict, data_dict, fold_k)
+        stop_training_result, list_losses, train_ndcgs, test_ndcgs = self.native_train2(ranker, eval_dict, train_data, test_data, vali_data)
+        if stop_training_result:
+            break
+        else:
+            losses_folds.append(list_losses)
+            train_ndcgs_folds.append(train_ndcgs)
+            test_ndcgs_folds.append(test_ndcgs)
+        dir_fold = os.path.join(self,dir_run, "Fold{0}".format(fold_k))
+        ranker.save(dir=os.path.join(dir_fold, "net_params.pkl"))
+    return stop_training_result, losses_folds, train_ndcgs_folds, test_ndcgs_folds
+setattr(LTREvaluator, "cross_validation_run", my_cross_validation_run)
+
+def my_native_train(self, ranker, eval_dict, train_data, test_data, vali_data):
+    list_losses = []
+    list_train_ndcgs = []
+    list_test_ndcgs = []
+    presort, label_type = train_data.presort, train_data.label_type
+    epochs, cutoffs = eval_dict['epochs'], eval_dict['cutoffs']
+    stop_training_result = False
+    for i in range(epochs):
+        epoch_loss = torch.zeros(1).to(self.device) if self.gpu else torch.zeros(1)
+        for qid, batch_rankings, batch_stds in train_data:
+            if self.gpu: batch_rankings, batch_stds = batch_rankings.to(self.device), batch_stds.to(self.device)
+            batch_loss, stop_training = ranker.train(batch_rankings, batch_stds, qid=qid, epoch_k=(i + 1), presort=presort, label_type=label_type)
+            if stop_training:
+                stop_training_result = True
+                break
+            else:
+                epoch_loss += batch_loss.item()
+        if not stop_training_result:
+            np_epoch_loss = epoch_loss.cpu().numpy() if self.gpu else epoch_loss.data.numpy()
+            list_losses.append(np_epoch_loss)
+            test_ndcg_ks = ndcg_at_ks(ranker=ranker, test_data=test_data, ks=cutoffs, label_type=LABEL_TYPE.MultiLabel, gpu=self.gpu, device=self.device,)
+            np_test_ndcg_ks = test_ndcg_ks.data.numpy()
+            list_test_ndcgs.append(np_test_ndcg_ks)
+            train_ndcg_ks = ndcg_at_ks(ranker=ranker, test_data=train_data, ks=cutoffs, label_type=LABEL_TYPE.MultiLabel, gpu=self.gpu, device=self.device,)
+            np_train_ndcg_ks = train_ndcg_ks.data.numpy()
+            list_train_ndcgs.append(np_train_ndcg_ks)
+    test_ndcgs = np.vstack(list_test_ndcgs)
+    train_ndcgs = np.vstack(list_train_ndcgs)
+    return stop_training_result, list_losses, train_ndcgs, test_ndcgs
+setattr(LTREvaluator, "native_train2", my_native_train)
 # ===============================================================
 
 def update_json_settings(dir_json, dir_rdata, dir_out, vali_k, cutoffs):
@@ -94,7 +147,7 @@ def update_json_settings(dir_json, dir_rdata, dir_out, vali_k, cutoffs):
         "RD":[False],
         "layers":[5],
         "apply_tl_af":[True],
-        "hd_hn_tl_af":["R", "GE"]
+        "hd_hn_tl_af":["GE"]
       }
     }
     RankNet_file = "RankNetParameter.json"
@@ -146,6 +199,22 @@ def start_train(models_to_run, dir_json, dir_rdata, dir_out, vali_k, cutoffs, de
     for model_id in models_to_run:
         evaluator.grid_run2(model_id, dir_json, vali_k, cutoffs, debug)
 
+def start_train_at(model_id, dir_json, dir_rdata, dir_out, vali_k, cutoffs, debug):
+    evaluator = create_ltr_evaluator(dir_json, dir_rdata, dir_out, vali_k, cutoffs)
+    data_eval_sf_json = os.path.join(dir_json, "Data_Eval_ScoringFunction.json")
+    evaluator.set_eval_setting(debug=debug, eval_json=data_eval_sf_json)
+    evaluator.set_data_setting(data_json=data_eval_sf_json)
+    evaluator.set_scoring_function_setting(sf_json=data_eval_sf_json)
+    evaluator.set_model_setting(model_id=model_id, dir_json=dir_json)
+    evaluator.declare_global(model_id=model_id)
+
+    data_dict = next(evaluator.iterate_data_setting())
+    eval_dict = next(evaluator.iterate_eval_setting())
+    model_para_dict = next(evaluator.iterate_model_setting())
+    sf_para_dict = next(evaluator.iterate_scoring_function_setting())
+
+    return evaluator.cross_validation_run(data_dict, eval_dict, sf_para_dict, model_para_dict)
+
 def predict(model_id, model_save_path, data_file_path, dir_json, dir_rdata, dir_out, vali_k, cutoffs, debug):
     evaluator = create_ltr_evaluator(dir_json, dir_rdata, dir_out, vali_k, cutoffs)
 
@@ -156,8 +225,10 @@ def predict(model_id, model_save_path, data_file_path, dir_json, dir_rdata, dir_
     evaluator.set_model_setting(model_id=model_id, dir_json=dir_json)
     evaluator.declare_global(model_id=model_id)
 
-    model_para_dict = evaluator.get_default_model_setting()
-    sf_para_dict = evaluator.get_default_scoring_function_setting()
+    data_dict = next(evaluator.iterate_data_setting())
+    eval_dict = next(evaluator.iterate_eval_setting())
+    model_para_dict = next(evaluator.iterate_model_setting())
+    sf_para_dict = next(evaluator.iterate_scoring_function_setting())
 
     data = LTRDataset(file=data_file_path, data_dict=data_dict, eval_dict=eval_dict)
     ranker = evaluator.load_ranker(sf_para_dict, model_para_dict)

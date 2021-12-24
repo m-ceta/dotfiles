@@ -595,19 +595,15 @@ def normalize(csv_path, sdir):
 
     return df
 
-def create_train_file(df, sdir, foldk):
-    qid = df["id"].drop_duplicates().sample(frac=1).to_numpy()
-    tra1_qid, test_qid = train_test_split(qid, test_size = 0.15)
-    tra2_qid, vali_qid = train_test_split(tra1_qid, test_size = len(test_qid))
-    fold_dir = os.path.join(sdir, "Fold" + str(foldk))
-    if not os.path.exists(fold_dir):
-        os.mkdir(fold_dir)
-    print("<Train>")
-    save_file(df[df["id"].isin(tra2_qid)], os.path.join(fold_dir, "train.txt"))
-    print("<Test>")
-    save_file(df[df["id"].isin(test_qid)], os.path.join(fold_dir, "test.txt"))
-    print("<Validation>")
-    save_file(df[df["id"].isin(vali_qid)], os.path.join(fold_dir, "vali.txt"))
+def create_train_file(df_all, sdir):
+    for i in range(len(df_all)):
+        fold_dir = os.path.join(sdir, "Fold" + str(i + 1))
+        if not os.path.exists(fold_dir):
+            os.mkdir(fold_dir)
+        test_df = df_all[i]
+        train_df = pd.concat(df_all[:i] + df_all[i + 1:]).reset_index(drop=True)
+        save_file(test_df, os.path.join(fold_dir, "test.txt"))
+        save_file(train_df, os.path.join(fold_dir, "train.txt"))
 
 def save_file(df, filepath):
     print("Save File: " + filepath)
@@ -794,12 +790,13 @@ def main(downall = False, gentrain = False, normalize_data = False, genpdict = F
                 save_file_as_csv(table, allcsv)
 
     if normalize_data:
+        df_all = []
         for i in range(split):
             allcsv = os.path.join(idir, "all{0}.csv".format(i + 1))
             if os.path.isfile(allcsv):
                 df = normalize(allcsv, odir)
-                create_train_file(df, odir, i + 1)
-                del(df)
+                df_all.append(df)
+        create_train_file(df_all, odir)
 
     if genpdict and rnum > 0 and pnum:
         today = datetime.date.today() 
