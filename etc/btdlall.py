@@ -19,13 +19,14 @@ from sklearn.model_selection import train_test_split
 from bs4 import BeautifulSoup
 
 burl = "https://www.boatrace.jp/owpc/pc/race/beforeinfo?rno={0}&jcd={1}&hd={2}"
-wreg1 = re.compile(r"weather.*is-wind([0-9]+)")
+wreg1 = re.compile(r".*is-wind([0-9]+)")
 wreg2 = re.compile(r"([0-9]+).*")
 
 ktxtfile = "K{0}{1:02}{2:02}.TXT"
 ksavfile = "k{0}{1:02}{2:02}.lzh"
 kurlbase = "http://www1.mbrace.or.jp/od2/K/{0}{1:02}/"
 
+btxtfile = "B{0}{1:02}{2:02}.TXT"
 bsavfile = "b{0}{1:02}{2:02}.lzh"
 burlbase = "http://www1.mbrace.or.jp/od2/B/{0}{1:02}/"
 
@@ -90,10 +91,10 @@ class Race:
     def append_curse(self, curse):
         self.curses.append(curse)
 
-    def to_list(self):
+    def to_list(self, predict = False):
         lst = []
         for curse in self.curses:
-            if curse.ranking < 1:
+            if not predict and curse.ranking < 1:
                 continue
             row = [ curse.ranking, self.ids, self.place, self.number, self.kinds, \
                     self.weather, self.wind_direction, self.wind, self.wave, curse.number, \
@@ -380,9 +381,9 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
 
     for race in races:
 
-        web_weather = -1
+        web_weather = ""
         web_wind = -1
-        web_wind_direction = -1
+        web_wind_direction = ""
         web_wave = -1
 
         web_curse_number = [0, 0, 0, 0, 0, 0]
@@ -403,20 +404,20 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
                     if label_div:
                         data_span = label_div.find("span", class_="weather1_bodyUnitLabelTitle")
                         if data_span:
-                            web_weather = to_number(data_span.text, True)
+                            web_weather = data_span.text
                 winddir_div = soup.find("div", class_="weather1_bodyUnit is-windDirection")
                 if winddir_div:
                     image_p = winddir_div.find("p")
-                    if image_p:
-                        clstxt = image_p.attrs["class"]
+                    if image_p and image_p.attrs["class"]:
+                        clstxt = image_p.attrs["class"][1]
                         matched = wreg1.match(clstxt)
                         if matched:
-                            num = to_number(matched.group(1))
+                            num = to_number(matched.group(1), True)
                             if num >= 1 and num <= 17:
                                 web_wind_direction = WINDLABEL[num - 1]
                 wind_div = soup.find("div", class_="weather1_bodyUnit is-wind")
                 if wind_div:
-                    label_div = weather_div.find("div", class_="weather1_bodyUnitLabel")
+                    label_div = wind_div.find("div", class_="weather1_bodyUnitLabel")
                     if label_div:
                         data_span = label_div.find("span", class_="weather1_bodyUnitLabelData")
                         if data_span:
@@ -425,7 +426,7 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
                                 web_wind = to_number(matched.group(1))
                 wave_div = soup.find("div", class_="weather1_bodyUnit is-wave")
                 if wave_div:
-                    label_div = weather_div.find("div", class_="weather1_bodyUnitLabel")
+                    label_div = wave_div.find("div", class_="weather1_bodyUnitLabel")
                     if label_div:
                         data_span = label_div.find("span", class_="weather1_bodyUnitLabelData")
                         if data_span:
@@ -445,7 +446,7 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
                                     num = to_number(info_td_all[0].text, True)
                                     ext = to_number(info_td_all[4].text)
                                     if num >= 1 and num <= 6 and ext >= 0:
-                                        web_exhibition_time[num] = ext
+                                        web_exhibition_time[num - 1] = ext
 
                 st_table = soup.find("table", class_="is-w238")
                 if st_table:
@@ -456,20 +457,43 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
                             for i, st_tr in enumerate(st_tr_all):
                                 st_div = st_tr.find("div", class_="table1_boatImage1")
                                 if st_div:
-                                    num_span = st_div.find("span", class_="table1_boatImage1Number is-type1")
+                                    num_span = st_div.find("span", class_="table1_boatImage1Number is-type")
                                     tme_span = st_div.find("span", class_="table1_boatImage1Time")
-                                    if num_span and tme_span:
-                                        num = to_number(num_span.text, True)
+                                    if tme_span:
                                         stt = to_number(tme_span.text)
-                                        if num >= 1 and num <= 6 and stt >= 0:
-                                            web_start_time[num] = stt
-                                        if num >= 1 and num <= 6:
+                                        num_span1 = st_div.find("span", class_="table1_boatImage1Number is-type1")
+                                        if num_span1:
                                             if stt >= 0:
-                                                web_start_time[num] = stt
-                                            web_curse_number[num] = i + 1
+                                                web_start_time[0] = stt
+                                            web_curse_number[0] = i + 1
+                                        num_span2 = st_div.find("span", class_="table1_boatImage1Number is-type2")
+                                        if num_span2:
+                                            if stt >= 0:
+                                                web_start_time[1] = stt
+                                            web_curse_number[1] = i + 1
+                                        num_span3 = st_div.find("span", class_="table1_boatImage1Number is-type3")
+                                        if num_span3:
+                                            if stt >= 0:
+                                                web_start_time[2] = stt
+                                            web_curse_number[2] = i + 1
+                                        num_span4 = st_div.find("span", class_="table1_boatImage1Number is-type4")
+                                        if num_span4:
+                                            if stt >= 0:
+                                                web_start_time[3] = stt
+                                            web_curse_number[3] = i + 1
+                                        num_span5 = st_div.find("span", class_="table1_boatImage1Number is-type5")
+                                        if num_span5:
+                                            if stt >= 0:
+                                                web_start_time[4] = stt
+                                            web_curse_number[4] = i + 1
+                                        num_span6 = st_div.find("span", class_="table1_boatImage1Number is-type6")
+                                        if num_span6:
+                                            if stt >= 0:
+                                                web_start_time[5] = stt
+                                            web_curse_number[5] = i + 1
 
         except Exception as e:
-            print("Get weather failed: {0}".format(traceback.format_exception_only(type(e), e)[0].rstrip()))
+            traceback.print_exc()
 
         if weather >= 0:
             web_weather = weather
@@ -499,14 +523,14 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
 
         invalid = []
         for i, curse in enumerate(race.curses):
-            num = curse.number
-            if len(web_curse_number) > num and web_curse_number[num] > 0:
-                curse.set_number(web_curse_number[num])
+            num = to_number(curse.number, True)
+            if len(web_curse_number) >= num and web_curse_number[num - 1] > 0:
+                curse.set_number(web_curse_number[num - 1])
             elif not i in invalid:
                 invalid.append(i)
-            if len(web_start_time) > num and web_start_time[num] > 0 \
-                    and len(web_exhibition_time) > num and web_exhibition_time[num] > 0:
-                curse.set_time(web_start_time[num], web_exhibition_time[num])
+            if len(web_start_time) >= num and web_start_time[num - 1] > 0 \
+                    and len(web_exhibition_time) >= num and web_exhibition_time[num - 1] > 0:
+                curse.set_time(web_start_time[num - 1], web_exhibition_time[num - 1])
             elif not i in invalid:
                 invalid.append(i)
         invalid.reverse()
@@ -518,12 +542,12 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
 
     return True
 
-def to_table(races):
+def to_table(races, predict = False):
     if not races:
         return
     table = []
     for race in races:
-        lst = race.to_list()
+        lst = race.to_list(predict)
         if lst:
             table.append(lst)
             if len(lst) < 6:
@@ -725,6 +749,20 @@ def calc_status(val):
 
 flatten = lambda x: [z for y in x for z in (flatten(y) if hasattr(y, '__iter__') and not isinstance(y, str) else (y,))]
 
+def index_of(lst, target):
+    if not lst:
+        return -1
+    tmp = target.strip()
+    for i, itm in enumerate(lst):
+        if type(itm) == list or type(itm) == tuple:
+            for v in itm:
+                if tmp == v:
+                    return i
+        else:
+            if tmp == itm:
+                return i
+    return -1
+
 #==============================================================================
 
 def download_all_test(ddir):
@@ -802,31 +840,33 @@ def main(downall = False, gentrain = False, normalize_data = False, genpdict = F
         today = datetime.date.today() 
         y1 = today.strftime("%Y")
         y2 = today.strftime("%y")
-        m = today.strftime("%m")
-        d = today.strftime("%d")
+        m = today.month
+        d = today.day
         bsav = bsavfile.format(y2, m, d)
         bsavpath = os.path.join(idir, bsav)
         if not os.path.isfile(bsavpath):
             burl = burlbase.format(y1, m) + bsav
             download(burl, bsav, idir)
-        if os.path.isfile(basvpath):
-            races = parse_bfile(bsavpath)
+        btxt = btxtfile.format(y2, m, d)
+        btxtpath = os.path.join(idir, btxt)
+        if os.path.isfile(btxtpath):
+            races = parse_bfile(btxtpath)
             if races:
                 race = [v for v in races if v.place == pnum and v.number == rnum]
                 if race:
                     if not get_last_info(race, weather, wind_direction, wind, wave, curse, stime, extime):
                         print("Error: Cannot get last info.")
                         return False
-                    table = to_table(race[0].to_list())
+                    table = to_table(race, True)
                     svcsvfile = os.path.join(odir, "predict.csv")
                     if os.path.isfile(svcsvfile):
                         os.remove(svcsvfile)
                     save_file_as_csv(table, svcsvfile)
-                    normalize(table, odir)
+                    df = normalize(svcsvfile, odir)
                     svfile = os.path.join(odir, "predict.txt")
                     if os.path.isfile(svfile):
                         os.remove(svfile)
-                    save_file(table, svfile)
+                    save_file(df, svfile)
 
     return True
 
