@@ -42,6 +42,7 @@ kreg4 = re.compile(r"^[ ]*([A-Z0-9]+)[ ]+([1-6])[ ]+([0-9]+)[ ]+([^ ]+)[ ]+([0-9
 # kreg6 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]*$")
 # kreg7 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([^-. 0-9]+)[ ]+([0-9]+)[ ]*$")
 # kreg8 = re.compile(r"^[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([^ ]+)[ ]+([0-9]+)[ ]*$")
+kreg9 = re.compile(r"^[ ]+３連単[ ]+[-1-6]+[ ]+([0-9]+)")
 
 bssign = "STARTB"
 besign = "FINALB"
@@ -50,7 +51,7 @@ breg2 = re.compile(r"^([0-9]+)BEND$")
 breg3 = re.compile(r"^[ ]*([0-9]+)R[ ]+(.+)[ ]+H([0-9]+)m.*$")
 breg4 = re.compile(r"^[ ]*([1-6])[ ]+([0-9]{4})([^-. 0-9]{4})([0-9]{2})([^-. 0-9]{2})([0-9]{2})([A-Z0-9]{2})([. 0-9]{5})([. 0-9]{6})([. 0-9]{5})([. 0-9]{6})([ 0-9]{3})([. 0-9]{6})([ 0-9]{3})([. 0-9]{6})(.*)$")
 
-csvhead = ["rank", "id", "place", "race_number", "race_type", "weather", "wind_direction", "wind", "wave", "curse_number", "mortor", "boat", "start_time", "exhibition_time", "racer_id", "racer_age", "racer_weight", "racer_base", "racer_grade", "racer_rate1", "racer_rate2", "racer_rate3", "racer_rate4", "recent_battle_record1", "recent_battle_record2", "recent_battle_record3", "recent_battle_record4", "recent_battle_record5", "recent_battle_record6", "recent_battle_record7", "recent_battle_record8", "recent_battle_record9", "recent_battle_record10", "recent_battle_record11", "recent_battle_record12", "racer_other_participation"]
+csvhead = ["rank", "id", "place", "race_number", "race_type", "weather", "wind_direction", "wind", "wave", "curse_number", "mortor", "boat", "start_time", "exhibition_time", "racer_id", "racer_age", "racer_weight", "racer_base", "racer_grade", "racer_rate1", "racer_rate2", "racer_rate3", "racer_rate4", "recent_battle_record1", "recent_battle_record2", "recent_battle_record3", "recent_battle_record4", "recent_battle_record5", "recent_battle_record6", "recent_battle_record7", "recent_battle_record8", "recent_battle_record9", "recent_battle_record10", "recent_battle_record11", "recent_battle_record12", "racer_other_participation", "dividend"]
 
 ZEN = "".join(chr(0xff01 + i) for i in range(94)) + "　"
 HAN = "".join(chr(0x21 + i) for i in range(94)) + " "
@@ -81,6 +82,7 @@ class Race:
         self.wind = 0
         self.wave = 0
         self.curses = [] 
+        self.dividend = 0
 
     def set_weather(self, weather, wind_direction, wind, wave):
         self.weather = weather
@@ -90,6 +92,9 @@ class Race:
 
     def append_curse(self, curse):
         self.curses.append(curse)
+
+    def set_dividend(self, dividend):
+        self.dividend = dividend
 
     def to_list(self, predict = False):
         lst = []
@@ -101,7 +106,7 @@ class Race:
                     curse.mortor, curse.boat, curse.stime, curse.extime, curse.racer.ids, curse.racer.age, \
                     curse.racer.weight, curse.racer.base, curse.racer.group, curse.racer.rate1, \
                     curse.racer.rate2, curse.racer.rate3, curse.racer.rate4, curse.racer.report, \
-                    curse.racer.other ]
+                    curse.racer.other, self.dividend ]
             lst.append(row)
         return lst
 
@@ -149,25 +154,51 @@ def download_all(ddir):
         sty = str(y)
         for m in range(1, 13):
             for d in range(1, 32):
-                ktxt = ktxtfile.format(sty[2:], m, d)
-                ktxtpath = os.path.join(ddir, ktxt)
-                if os.path.isfile(ktxtpath):
-                    print("url: {0}, sav: {1} --> EXISTS".format(kurl, ksav))
-                    continue
-                ksav = ksavfile.format(sty[2:], m, d)
-                kurl = kurlbase.format(sty, m) + ksav
-                time.sleep(1)
-                if download(kurl, ksav, ddir):
-                    print("url: {0}, sav: {1} --> OK".format(kurl, ksav))
-                    bsav = bsavfile.format(sty[2:], m, d)
-                    burl = burlbase.format(sty, m) + bsav
-                    time.sleep(1)
-                    if download(burl, bsav, ddir):
-                        print("url: {0}, sav: {1} --> OK".format(burl, bsav))
-                    else:
-                        print("url: {0}, sav: {1} --> NG".format(burl, bsav))
-                else:
-                    print("url: {0}, sav: {1} --> NG".format(kurl, ksav))
+                download_at(y, m, d, ddir)
+
+def download_kfile(y, m, d, ddir):
+    if not os.path.exists(ddir):
+        print("dir: {0} --> Not found.".format(ddir))
+        return None
+    sty = str(y)
+    ktxt = ktxtfile.format(sty[2:], m, d)
+    ktxtpath = os.path.join(ddir, ktxt)
+    ksav = ksavfile.format(sty[2:], m, d)
+    kurl = kurlbase.format(sty, m) + ksav
+    if os.path.isfile(ktxtpath):
+        print("url: {0}, sav: {1} --> EXISTS".format(kurl, ksav))
+        return ktxtpath
+    if download(kurl, ksav, ddir):
+        print("url: {0}, sav: {1} --> OK".format(kurl, ksav))
+        return ktxtpath
+    else:
+        print("url: {0}, sav: {1} --> NG".format(kurl, ksav))
+        return None
+
+def download_bfile(y, m, d, ddir):
+    if not os.path.exists(ddir):
+        print("dir: {0} --> Not found.".format(ddir))
+        return None
+    sty = str(y)
+    btxt = btxtfile.format(sty[2:], m, d)
+    btxtpath = os.path.join(ddir, btxt)
+    bsav = bsavfile.format(sty[2:], m, d)
+    burl = burlbase.format(sty, m) + bsav
+    if os.path.isfile(btxtpath):
+        print("url: {0}, sav: {1} --> EXISTS".format(burl, bsav))
+        return btxtpath
+    if download(burl, bsav, ddir):
+        print("url: {0}, sav: {1} --> OK".format(burl, bsav))
+        return btxtpath
+    else:
+        print("url: {0}, sav: {1} --> NG".format(burl, bsav))
+        return None
+
+def download_at(y, m, d, ddir):
+    if download_kfile(y, m, d, ddir):
+        if download_bfile(y, m, d, ddir):
+            return True
+    return False
 
 def download(url, sav, ddir):
     try:
@@ -349,6 +380,7 @@ def parse_kfile(filepath, races):
                     if race:
                         matched = kreg4.match(line)
                         matched2 = kreg4_2.match(line)
+                        matched3 = kreg9.match(line)
                         if not matched and matched2:
                             print(line)
                         if matched:
@@ -371,8 +403,12 @@ def parse_kfile(filepath, races):
                             if race[0].ids == "200115023010":
                                 #print(line)
                                 pass
+                        if matched3:
+                            dividend = to_number(matched3.group(1))
+                            if dividend > 0:
+                                race.set_dividend(dividend)
 
-def get_last_info(races, weather, wind_direction, wind, wave, curse_number, start_time, exhibition_time):
+def get_last_info(races):
 
     if not races:
         return
@@ -505,7 +541,7 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
             web_wave = wave
 
         if web_weather < 0 or web_wind_direction < 0 or web_wind < 0 or web_wave < 0:
-            return False
+            continue
 
         race.set_weather(web_weather, web_wind_direction, web_wind, web_wave)
 
@@ -533,14 +569,11 @@ def get_last_info(races, weather, wind_direction, wind, wave, curse_number, star
                 curse.set_time(web_start_time[num - 1], web_exhibition_time[num - 1])
             elif not i in invalid:
                 invalid.append(i)
-        invalid.reverse()
-        for i in invalid:
-            del(race.curses[i])
 
-        if len(race.curses) < 4:
-            return False
-
-    return True
+        if len(invalid) <= 3:
+            invalid.reverse()
+            for i in invalid:
+                del(race.curses[i])
 
 def to_table(races, predict = False):
     if not races:
@@ -554,11 +587,7 @@ def to_table(races, predict = False):
                 print(lst[0][1])
     return table
 
-def normalize(csv_path, sdir):
-
-    if not os.path.isfile(csv_path):
-        return
-    df = pd.read_csv(csv_path)
+def normalize(df):
 
     # 0:curse.ranking        :reverse
     df["rank"] = df["rank"].apply(lambda x: RANKLABEL[x - 1] if x >= 1 and x <= 6 else 0)
@@ -612,6 +641,9 @@ def normalize(csv_path, sdir):
     df = df.drop(btcols[1:], axis=1)
     # 24:curse.racer.other   :one hot
     df["racer_other_participation"] = df[["racer_other_participation","race_number"]].apply(lambda x: get_vector(calc_status(x), [0, 1, 2]), axis = 1)
+
+    # Drop dividend.
+    df = df.drop(["dividend"], axis=1)
 
 
     print("--- Normalized DataFrame ---")
@@ -765,303 +797,93 @@ def index_of(lst, target):
 
 #==============================================================================
 
-def download_all_test(ddir):
-    if not os.path.exists(ddir):
-        os.mkdir(ddir)
-    for y in (1998, 2010, 2020):
-        sty = str(y)
-        for m in (1, 6, 12):
-            for d in (1, 15):
-                ksav = ksavfile.format(sty[2:], m, d)
-                kurl = kurlbase.format(sty, m) + ksav
-                time.sleep(1)
-                print("url: {0}, sav: {1}".format(kurl, ksav))
-                if download(kurl, ksav, ddir):
-                    bsav = bsavfile.format(sty[2:], m, d)
-                    burl = burlbase.format(sty, m) + bsav
-                    time.sleep(1)
-                    print("url: {0}, sav: {1}".format(burl, bsav))
-                    download(burl, bsav, ddir)
-
-def main(downall = False, gentrain = False, normalize_data = False, genpdict = False, \
-        idir = "", odir = "", rnum = 0, pnum = 0, \
-        weather = -1, wind = -1, wind_direction = -1, wave = -1, \
-        curse = [], stime = [], extime = [], split = 5):
-
-    if idir:
-        p = pathlib.Path(idir)
-        if not p.is_absolute():
-            idir = p.resolve()
-
-    if odir:
-        p = pathlib.Path(odir)
-        if not p.is_absolute():
-            odir = p.resolve()
-
-    if not os.path.exists(idir):
-        print("Error: No input directory.")
-        return False
-
-    if (gentrain or (genpdict and rnum > 0 and pnum) or normalize_data) and not os.path.exists(odir):
-        print("Error: invalid parameter.")
-        return False
-
-    install_url_opener()
-
-    if downall:
-        download_all(idir)
-
-    if gentrain:
-        races = parse_all(idir)
-        if races:
-            count = len(races)
-            step = int(math.floor(count / (split + 0.0)))
-            for i in range(split):
-                si = int(step * i)
-                ei = si + step 
-                if i == split - 1:
-                    ei = count
-                table = to_table(races[si:ei])
-                allcsv = os.path.join(odir, "all{0}.csv".format(i + 1))
-                if os.path.isfile(allcsv):
-                    os.remove(allcsv)
-                save_file_as_csv(table, allcsv)
-
-    if normalize_data:
-        df_all = []
-        for i in range(split):
-            allcsv = os.path.join(idir, "all{0}.csv".format(i + 1))
-            if os.path.isfile(allcsv):
-                df = normalize(allcsv, odir)
-                df_all.append(df)
-        create_train_file(df_all, odir)
-
-    if genpdict and rnum > 0 and pnum:
-        today = datetime.date.today() 
-        y1 = today.strftime("%Y")
-        y2 = today.strftime("%y")
-        m = today.month
-        d = today.day
-        bsav = bsavfile.format(y2, m, d)
-        bsavpath = os.path.join(idir, bsav)
-        if not os.path.isfile(bsavpath):
-            burl = burlbase.format(y1, m) + bsav
-            download(burl, bsav, idir)
-        btxt = btxtfile.format(y2, m, d)
-        btxtpath = os.path.join(idir, btxt)
-        if os.path.isfile(btxtpath):
-            races = parse_bfile(btxtpath)
-            if races:
-                race = [v for v in races if v.place == pnum and v.number == rnum]
-                if race:
-                    if not get_last_info(race, weather, wind_direction, wind, wave, curse, stime, extime):
-                        print("Error: Cannot get last info.")
-                        return False
-                    table = to_table(race, True)
-                    svcsvfile = os.path.join(odir, "predict.csv")
-                    if os.path.isfile(svcsvfile):
-                        os.remove(svcsvfile)
-                    save_file_as_csv(table, svcsvfile)
-                    df = normalize(svcsvfile, odir)
-                    svfile = os.path.join(odir, "predict.txt")
-                    if os.path.isfile(svfile):
-                        os.remove(svfile)
-                    save_file(df, svfile)
-
-    return True
-
-def run():
-
-    if len(sys.argv) <= 1:
+def download_past_data_all(src_dir):
+    if not src_dir:
         return
+    p = pathlib.Path(src_dir)
+    if not p.is_absolute():
+        src_dir = p.resolve()
+    install_url_opener()
+    download_all(src_dir)
 
-    downall = False
-    gentrain = False
-    normalize_data = False
-    genpdict = False
-    idir = ""
-    odir = ""
-    rnum = 0
-    pnum = ""
-    weather = -1
-    wind = -1
-    wind_direction = -1
-    wave = -1
-    curse = [1, 2, 3, 4, 5, 6]
-    stime = [-10, -10, -10, -10, -10, -10]
-    extime = [-10, -10, -10, -10, -10, -10]
+def generate_train_csv(src_dir, csv_dir, split=5):
+    races = parse_all(src_dir)
+    if races:
+        count = len(races)
+        step = int(math.floor(count / (split + 0.0)))
+        for i in range(split):
+            si = int(step * i)
+            ei = si + step 
+            if i == split - 1:
+                ei = count
+            table = to_table(races[si:ei])
+            allcsv = os.path.join(csv_dir, "data{0}.csv".format(i + 1))
+            if os.path.isfile(allcsv):
+                os.remove(allcsv)
+            save_file_as_csv(table, allcsv)
 
-    i = 1
-    while i < len(sys.argv):
-        v = sys.argv[i]
-        if v == "-d":
-            downall = True
-        elif v == "-t":
-            gentrain = True
-        elif v == "-n":
-            normalize_data = True
-        elif v == "-p":
-            genpdict = True
-        elif v == "-i":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            idir = sys.argv[i + 1]
-            i += 1
-        elif v == "-o":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            odir = sys.argv[i + 1]
-            i += 1
-        elif v == "-pr":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            rnum = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pp":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            pnum = sys.argv[i + 1]
-            i += 1
-        elif v == "-pwt":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            weather = to_number(sys.argv[i + 1], True)
-            i += 1
-        elif v == "-pwd":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            wind = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pwdd":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            wind_direction = to_number(sys.argv[i + 1], True)
-            i += 1
-        elif v == "-pwv":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            wave = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pc1":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            curse[0] = to_number(sys.argv[i + 1], True)
-            i += 1
-        elif v == "-ps1":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            stime[0] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pex1":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            extime[0] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pc2":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            curse[1] = to_number(sys.argv[i + 1], True)
-            i += 1
-        elif v == "-ps2":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            stime[1] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pex2":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            extime[1] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pc3":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            curse[2] = to_number(sys.argv[i + 1], True)
-            i += 1
-        elif v == "-ps3":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            stime[2] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pex3":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            extime[2] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pc4":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            curse[3] = to_number(sys.argv[i + 1], True)
-            i += 1
-        elif v == "-ps4":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            stime[3] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pex4":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            extime[3] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pc5":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            curse[4] = to_number(sys.argv[i + 1], True)
-            i += 1
-        elif v == "-ps5":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            stime[4] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pex5":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            extime[4] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pc6":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            curse[5] = to_number(sys.argv[i + 1], True)
-            i += 1
-        elif v == "-ps6":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            stime[5] = to_number(sys.argv[i + 1])
-            i += 1
-        elif v == "-pex6":
-            if i + 1 == len(sys.argv):
-                print("Error: invalid parameter.")
-                return
-            extime[5] = to_number(sys.argv[i + 1])
-            i += 1
-        i += 1
+def csv_to_svmlight(data_dir):
+    df_all1 = []
+    df_all2 = []
+    df_all3 = []
+    df_all4 = []
+    for f in os.listdir(data_dir):
+        p = os.path.join(data_dir, f)
+        if not os.path.isfile(p):
+            continue
+        ext = os.path.splitext(f)
+        if ext != "csv":
+            df_src = pd.read_csv(p)
+            df_src_pt1 = df_src.query("dividend < 5000")
+            df_src_pt2 = df_src.query("5000 <= dividend < 10000")
+            df_src_pt3 = df_src.query("dividend >= 10000")
+            df_dst_pt1 = normalize(df_src_pt1)
+            df_dst_pt2 = normalize(df_src_pt2)
+            df_dst_pt3 = normalize(df_src_pt3)
+            df_dst = normalize(df_src)
+            df_all1.append(df_dst_pt1)
+            df_all2.append(df_dst_pt2)
+            df_all3.append(df_dst_pt3)
+            df_all4.append(df_dst)
+    for i, df_all_itm in enumerate([df_all1, df_all2, df_all3, df_all4]):
+        pt_dir = os.path.join(odir, "pt" + str(i + 1))
+        if not os.path.exists(pt_dir):
+            os.mkdir(pt_dir)
+        fold_dir = os.path.join(pt_dir, "Fold1")
+        if not os.path.exists(fold_dir):
+            os.mkdir(fold_dir)
+        test_df = df_all_itm[i]
+        train_df = pd.concat(df_all_itm[:i] + df_all_itm[i + 1:]).reset_index(drop=True)
+        save_file(test_df, os.path.join(fold_dir, "test.txt"))
+        save_file(train_df, os.path.join(fold_dir, "train.txt"))
 
-    main(downall, gentrain, normalize_data, genpdict, idir, odir, rnum, pnum, weather, wind, wind_direction, wave, curse, stime, extime)
+def print_race_info(y, m, d, download_dir):
+    bpath = download_bfile(y, m, d, download_dir)
+    if not bpath:
+        return
+    with codecs.open(bpath, "r", "cp932", "ignore") as f:
+        for line in iter(f.readline, ""):
+            line = line.rstrip("\r\n")
+            print(line)
 
-if __name__ == '__main__':
-    run()
+def get_predict_data(y, m, d, download_dir, pnum, rnum, predict_save_dir):
+    bpath = download_bfile(y, m, d, download_dir)
+    if not bpath:
+        return
+    races = parse_bfile(bpath)
+    if races:
+        race = [v for v in races if v.place == pnum and v.number == rnum]
+        if race:
+            get_last_info(race)
+            table = to_table(race, True)
+            svcsvfile = os.path.join(predict_save_dir, "predict.csv")
+            if os.path.isfile(svcsvfile):
+                os.remove(svcsvfile)
+            save_file_as_csv(table, svcsvfile)
+            df_src = pd.read_csv(svcsvfile)
+            df = normalize(df_src)
+            svfile = os.path.join(predict_save_dir, "predict.txt")
+            if os.path.isfile(svfile):
+                os.remove(svfile)
+            save_file(df, svfile)
 
