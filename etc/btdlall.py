@@ -13,8 +13,9 @@ import csv
 import urllib.request
 import pandas as pd
 import numpy as np
+from pickle import dump, load
 import sklearn.datasets
-from sklearn.preprocessing import minmax_scale
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from bs4 import BeautifulSoup
 
@@ -42,7 +43,7 @@ kreg4 = re.compile(r"^[ ]*([A-Z0-9]+)[ ]+([1-6])[ ]+([0-9]+)[ ]+([^ ]+)[ ]+([0-9
 # kreg6 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]*$")
 # kreg7 = re.compile(r"^[ ]+([^-. 0-9]+)[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([^-. 0-9]+)[ ]+([0-9]+)[ ]*$")
 # kreg8 = re.compile(r"^[ ]+([-0-9]+)[ ]+([0-9]+)[ ]+([^ ]+)[ ]+([0-9]+)[ ]*$")
-kreg9 = re.compile(r"^[ ]+３連単[ ]+[-1-6]+[ ]+([0-9]+)")
+kreg9 = re.compile(r"^[ ]+３連単[ 　]+[-1-6]+[ 　]+([0-9]+)")
 
 bssign = "STARTB"
 besign = "FINALB"
@@ -285,7 +286,7 @@ def parse_bfile(filepath):
                     matched = breg3.match(hline)
                     if matched:
                         rnum = to_number(matched.group(1), True)
-                        rids = filepref[1:] + str(plcode).zfill(3) + str(rnum).zfill(3)
+                        rids = "1" + filepref[1:] + str(plcode).zfill(3) + str(rnum).zfill(3)
                         kinds = matched.group(2)
                         around = matched.group(3)
                         race = Race(rids, plcode, kinds, rnum, around)
@@ -361,7 +362,7 @@ def parse_kfile(filepath, races):
                     matched = kreg3.match(line)
                     if matched:
                         rnum = to_number(matched.group(1), True)
-                        rids = filepref[1:] + str(plcode).zfill(3) + str(rnum).zfill(3)
+                        rids = "1" + filepref[1:] + str(plcode).zfill(3) + str(rnum).zfill(3)
                         race = [v for _, v in enumerate(races) if v.ids == rids]
                         if race:
                             weather = matched.group(4)
@@ -404,9 +405,9 @@ def parse_kfile(filepath, races):
                                 #print(line)
                                 pass
                         if matched3:
-                            dividend = to_number(matched3.group(1))
+                            dividend = to_number(matched3.group(1), True)
                             if dividend > 0:
-                                race.set_dividend(dividend)
+                                race[0].set_dividend(dividend)
 
 def get_last_info(races):
 
@@ -587,7 +588,10 @@ def to_table(races, predict = False):
                 print(lst[0][1])
     return table
 
-def normalize(df):
+def normalize(df, dir_scale, scale_load = False):
+
+    if not os.path.exists(dir_scale):
+        os.mkdir(dir_scale)
 
     # 0:curse.ranking        :reverse
     df["rank"] = df["rank"].apply(lambda x: RANKLABEL[x - 1] if x >= 1 and x <= 6 else 0)
@@ -603,19 +607,19 @@ def normalize(df):
     # 6:self.wind_direction  :one hot
     df["wind_direction"] = df["wind_direction"].apply(lambda x: get_vector(x, WINDLABEL))
     # 7:self.wind            :scale
-    df["wind"] = minmax_scale(df["wind"])
+    df["wind"] = standardization(df[["wind"]], os.path.join(dir_scale, "wind_scale.pkl"), scale_load)
     # 8:self.wave            :scale
-    df["wave"] = minmax_scale(df["wave"])
+    df["wave"] = standardization(df[["wave"]], os.path.join(dir_scale, "wave_scale.pkl"), scale_load)
     # 9:curse.number        :one hot
     df["curse_number"] = df["curse_number"].apply(lambda x: get_vector(x, CSNMLABEL))
     # 10:curse.mortor        :scale
-    df["mortor"] = minmax_scale(df["mortor"])
+    df["mortor"] = standardization(df[["mortor"]], os.path.join(dir_scale, "mortor_scale.pkl"), scale_load)
     # 11:curse.boat          :scale
-    df["boat"] = minmax_scale(df["boat"])
+    df["boat"] = standardization(df[["boat"]], os.path.join(dir_scale, "boat_scale.pkl"), scale_load)
     # 12:curse.stime         :scale
-    df["start_time"] = minmax_scale(df["start_time"])
+    df["start_time"] = standardization(df[["start_time"]], os.path.join(dir_scale, "start_time_scale.pkl"), scale_load)
     # 13:curse.extime         :scale
-    df["exhibition_time"] = minmax_scale(df["exhibition_time"])
+    df["exhibition_time"] = standardization(df[["exhibition_time"]], os.path.join(dir_scale, "exhibition_time_scale.pkl"), scale_load)
     # 14:curse.racer.ids     :one hot
     # df["racer_id"] = df["racer_id"].apply(lambda x: get_vector(x, RACERLABEL))
     df.drop("racer_id", axis=1)
@@ -628,43 +632,32 @@ def normalize(df):
     # 18:curse.racer.group   :one hot
     df["racer_grade"] = df["racer_grade"].apply(lambda x: get_vector(x, RCRGLABEL))
     # 19:curse.racer.rate1   :scale
-    df["racer_rate1"] = minmax_scale(df["racer_rate1"])
+    df["racer_rate1"] = standardization(df[["racer_rate1"]], os.path.join(dir_scale, "racer_rate1_scale.pkl"), scale_load)
     # 20:curse.racer.rate2   :scale
-    df["racer_rate2"] = minmax_scale(df["racer_rate2"])
+    df["racer_rate2"] = standardization(df[["racer_rate2"]], os.path.join(dir_scale, "racer_rate2_scale.pkl"), scale_load)
     # 21:curse.racer.rate3   :scale
-    df["racer_rate3"] = minmax_scale(df["racer_rate3"])
+    df["racer_rate3"] = standardization(df[["racer_rate3"]], os.path.join(dir_scale, "racer_rate3_scale.pkl"), scale_load)
     # 22:curse.racer.rate4   :scale
-    df["racer_rate4"] = minmax_scale(df["racer_rate4"])
+    df["racer_rate4"] = standardization(df[["racer_rate4"]], os.path.join(dir_scale, "racer_rate4_scale.pkl"), scale_load)
     # 23:curse.racer.report  :each reverse
     btcols = ["recent_battle_record" + str(i + 1) for i in range(12)]
-    df[btcols[0]] = minmax_scale(df[btcols].apply(calc_condition, axis = 1))
+    df[btcols[0]] = df[btcols].apply(calc_condition, axis = 1)
+    df[btcols[0]] = standardization(df[[btcols[0]]], os.path.join(dir_scale, "recent_battle_record_scale.pkl"), scale_load)
     df = df.drop(btcols[1:], axis=1)
     # 24:curse.racer.other   :one hot
     df["racer_other_participation"] = df[["racer_other_participation","race_number"]].apply(lambda x: get_vector(calc_status(x), [0, 1, 2]), axis = 1)
-
-    # Drop dividend.
-    df = df.drop(["dividend"], axis=1)
-
 
     print("--- Normalized DataFrame ---")
     print(df)
 
     return df
 
-def create_train_file(df_all, sdir):
-    for i in range(len(df_all)):
-        fold_dir = os.path.join(sdir, "Fold" + str(i + 1))
-        if not os.path.exists(fold_dir):
-            os.mkdir(fold_dir)
-        test_df = df_all[i]
-        train_df = pd.concat(df_all[:i] + df_all[i + 1:]).reset_index(drop=True)
-        save_file(test_df, os.path.join(fold_dir, "test.txt"))
-        save_file(train_df, os.path.join(fold_dir, "train.txt"))
-
 def save_file(df, filepath):
     print("Save File: " + filepath)
     print("--- Save Target DataFrame(ALL) ---")
     print(df)
+    if "dividend" in df.columns:
+        df = df.drop(["dividend"], axis=1)
     X = df.iloc[:,2:].apply(lambda x: flatten(x), axis=1).to_numpy().tolist()
     print("--- Save Target DataFrame(X) ---")
     print(X)
@@ -795,6 +788,15 @@ def index_of(lst, target):
                 return i
     return -1
 
+def standardization(df, pkl_path, scale_load):
+    scaler = StandardScaler()
+    if scale_load:
+        scaler = load(open(pkl_path, "rb"))
+    else:
+        scaler.fit(df)
+        dump(scaler, open(pkl_path, "wb"))
+    return scaler.transform(df)
+
 #==============================================================================
 
 def download_past_data_all(src_dir):
@@ -806,56 +808,38 @@ def download_past_data_all(src_dir):
     install_url_opener()
     download_all(src_dir)
 
-def generate_train_csv(src_dir, csv_dir, split=5):
+def generate_train_csv(src_dir, csv_dir):
     races = parse_all(src_dir)
     if races:
-        count = len(races)
-        step = int(math.floor(count / (split + 0.0)))
-        for i in range(split):
-            si = int(step * i)
-            ei = si + step 
-            if i == split - 1:
-                ei = count
-            table = to_table(races[si:ei])
-            allcsv = os.path.join(csv_dir, "data{0}.csv".format(i + 1))
-            if os.path.isfile(allcsv):
-                os.remove(allcsv)
-            save_file_as_csv(table, allcsv)
+        table = to_table(races)
+        allcsv = os.path.join(csv_dir, "data.csv")
+        if os.path.isfile(allcsv):
+            os.remove(allcsv)
+        save_file_as_csv(table, allcsv)
 
 def csv_to_svmlight(data_dir):
-    df_all1 = []
-    df_all2 = []
-    df_all3 = []
-    df_all4 = []
-    for f in os.listdir(data_dir):
-        p = os.path.join(data_dir, f)
-        if not os.path.isfile(p):
-            continue
-        ext = os.path.splitext(f)
-        if ext != "csv":
-            df_src = pd.read_csv(p)
-            df_src_pt1 = df_src.query("dividend < 5000")
-            df_src_pt2 = df_src.query("5000 <= dividend < 10000")
-            df_src_pt3 = df_src.query("dividend >= 10000")
-            df_dst_pt1 = normalize(df_src_pt1)
-            df_dst_pt2 = normalize(df_src_pt2)
-            df_dst_pt3 = normalize(df_src_pt3)
-            df_dst = normalize(df_src)
-            df_all1.append(df_dst_pt1)
-            df_all2.append(df_dst_pt2)
-            df_all3.append(df_dst_pt3)
-            df_all4.append(df_dst)
-    for i, df_all_itm in enumerate([df_all1, df_all2, df_all3, df_all4]):
-        pt_dir = os.path.join(odir, "pt" + str(i + 1))
+    p = os.path.join(data_dir, "data.csv")
+    if not os.path.isfile(p):
+        return
+    df_src = pd.read_csv(p)
+    df_src_rct = df_src.query('1020000000000 <= id < 1970000000000')
+    df_dst_rct = normalize(df_src_rct, os.path.join(data_dir, "scale"))
+    df_dst_pt1 = df_dst_rct.query("dividend < 5000")
+    df_dst_pt2 = df_dst_rct.query("5000 <= dividend < 10000")
+    df_dst_pt3 = df_dst_rct.query("dividend >= 10000")
+    for i, df in enumerate([df_dst_rct, df_dst_pt1, df_dst_pt2, df_dst_pt3]):
+        pt_dir = os.path.join(data_dir, "pt" + str(i + 1))
         if not os.path.exists(pt_dir):
             os.mkdir(pt_dir)
         fold_dir = os.path.join(pt_dir, "Fold1")
         if not os.path.exists(fold_dir):
             os.mkdir(fold_dir)
-        test_df = df_all_itm[i]
-        train_df = pd.concat(df_all_itm[:i] + df_all_itm[i + 1:]).reset_index(drop=True)
-        save_file(test_df, os.path.join(fold_dir, "test.txt"))
-        save_file(train_df, os.path.join(fold_dir, "train.txt"))
+        qid = df["id"].drop_duplicates().sample(frac=1).to_numpy()
+        train_qid, test_qid = train_test_split(qid, test_size = 0.2)
+        df_train = df[df["id"].isin(train_qid)]
+        df_test = df[df["id"].isin(test_qid)]
+        save_file(df_test, os.path.join(fold_dir, "test.txt"))
+        save_file(df_train, os.path.join(fold_dir, "train.txt"))
 
 def print_race_info(y, m, d, download_dir):
     bpath = download_bfile(y, m, d, download_dir)
@@ -866,7 +850,7 @@ def print_race_info(y, m, d, download_dir):
             line = line.rstrip("\r\n")
             print(line)
 
-def get_predict_data(y, m, d, download_dir, pnum, rnum, predict_save_dir):
+def get_predict_data(y, m, d, download_dir, pnum, rnum, predict_save_dir, scale_dir):
     bpath = download_bfile(y, m, d, download_dir)
     if not bpath:
         return
@@ -881,7 +865,7 @@ def get_predict_data(y, m, d, download_dir, pnum, rnum, predict_save_dir):
                 os.remove(svcsvfile)
             save_file_as_csv(table, svcsvfile)
             df_src = pd.read_csv(svcsvfile)
-            df = normalize(df_src)
+            df = normalize(df_src, scale_dir, True)
             svfile = os.path.join(predict_save_dir, "predict.txt")
             if os.path.isfile(svfile):
                 os.remove(svfile)
