@@ -49,7 +49,7 @@ bssign = "STARTB"
 besign = "FINALB"
 breg1 = re.compile(r"^([0-9]+)BBGN$")
 breg2 = re.compile(r"^([0-9]+)BEND$")
-breg3 = re.compile(r"^[ ]*([0-9]+)R[ ]+(.+)[ ]+H([0-9]+)m.*$")
+breg3 = re.compile(r"^[ ]*([0-9]+)R[ ]+(.+)[ ]+H([0-9]+)m[ ]+[^0-9]+([0-9]+):([0-9]+)[ ]*$")
 breg4 = re.compile(r"^[ ]*([1-6])[ ]+([0-9]{4})([^-. 0-9]{4})([0-9]{2})([^-. 0-9]{2})([0-9]{2})([A-Z0-9]{2})([. 0-9]{5})([. 0-9]{6})([. 0-9]{5})([. 0-9]{6})([ 0-9]{3})([. 0-9]{6})([ 0-9]{3})([. 0-9]{6})(.*)$")
 
 csvhead = ["rank", "id", "place", "race_number", "race_type", "weather", "wind_direction", "wind", "wave", "curse_number", "mortor", "boat", "start_time", "exhibition_time", "racer_id", "racer_age", "racer_weight", "racer_base", "racer_grade", "racer_rate1", "racer_rate2", "racer_rate3", "racer_rate4", "recent_battle_record1", "recent_battle_record2", "recent_battle_record3", "recent_battle_record4", "recent_battle_record5", "recent_battle_record6", "recent_battle_record7", "recent_battle_record8", "recent_battle_record9", "recent_battle_record10", "recent_battle_record11", "recent_battle_record12", "racer_other_participation", "dividend"]
@@ -72,12 +72,14 @@ RCRGLABEL = ["A1", "A2", "B1", "B2"]
 
 class Race:
 
-    def __init__(self, ids, place, kinds, number, around):
+    def __init__(self, ids, place, kinds, number, around, hour, minute):
         self.ids = ids 
         self.place = place
         self.kinds = kinds
         self.number = number
         self.around = around
+        self.hour = hour
+        self.minute = minute
         self.weather = 0
         self.wind_direction = 0
         self.wind = 0
@@ -159,7 +161,7 @@ def download_all(ddir):
 
 def download_kfile(y, m, d, ddir):
     if not os.path.exists(ddir):
-        print("dir: {0} --> Not found.".format(ddir))
+        # print("dir: {0} --> Not found.".format(ddir))
         return None
     sty = str(y)
     ktxt = ktxtfile.format(sty[2:], m, d)
@@ -167,18 +169,18 @@ def download_kfile(y, m, d, ddir):
     ksav = ksavfile.format(sty[2:], m, d)
     kurl = kurlbase.format(sty, m) + ksav
     if os.path.isfile(ktxtpath):
-        print("url: {0}, sav: {1} --> EXISTS".format(kurl, ksav))
+        # print("url: {0}, sav: {1} --> EXISTS".format(kurl, ksav))
         return ktxtpath
     if download(kurl, ksav, ddir):
-        print("url: {0}, sav: {1} --> OK".format(kurl, ksav))
+        # print("url: {0}, sav: {1} --> OK".format(kurl, ksav))
         return ktxtpath
     else:
-        print("url: {0}, sav: {1} --> NG".format(kurl, ksav))
+        # print("url: {0}, sav: {1} --> NG".format(kurl, ksav))
         return None
 
 def download_bfile(y, m, d, ddir):
     if not os.path.exists(ddir):
-        print("dir: {0} --> Not found.".format(ddir))
+        # print("dir: {0} --> Not found.".format(ddir))
         return None
     sty = str(y)
     btxt = btxtfile.format(sty[2:], m, d)
@@ -186,13 +188,13 @@ def download_bfile(y, m, d, ddir):
     bsav = bsavfile.format(sty[2:], m, d)
     burl = burlbase.format(sty, m) + bsav
     if os.path.isfile(btxtpath):
-        print("url: {0}, sav: {1} --> EXISTS".format(burl, bsav))
+        # print("url: {0}, sav: {1} --> EXISTS".format(burl, bsav))
         return btxtpath
     if download(burl, bsav, ddir):
-        print("url: {0}, sav: {1} --> OK".format(burl, bsav))
+        # print("url: {0}, sav: {1} --> OK".format(burl, bsav))
         return btxtpath
     else:
-        print("url: {0}, sav: {1} --> NG".format(burl, bsav))
+        # print("url: {0}, sav: {1} --> NG".format(burl, bsav))
         return None
 
 def download_at(y, m, d, ddir):
@@ -247,12 +249,12 @@ def parse_all(ddir):
             if filename.startswith("B") and filename.lower().endswith("txt"):
                 bfilepath = os.path.join(ddir, "B" + filename[1:])
                 kfilepath = os.path.join(ddir, "K" + filename[1:])
-                print("file: {0}, {1}".format(bfilepath, kfilepath))
+                # print("file: {0}, {1}".format(bfilepath, kfilepath))
                 races = parse_bfile(bfilepath)
                 if races:
                     parse_kfile(kfilepath, races)
                     races_all.extend(races)
-                    print("  --> Done".format(bfilepath, kfilepath))
+                    # print("  --> Done".format(bfilepath, kfilepath))
         except Exception as e:
             print("Parse failed: {0}".format(traceback.format_exception_only(type(e), e)[0].rstrip()))
 
@@ -289,7 +291,9 @@ def parse_bfile(filepath):
                         rids = "1" + filepref[1:] + str(plcode).zfill(3) + str(rnum).zfill(3)
                         kinds = matched.group(2)
                         around = matched.group(3)
-                        race = Race(rids, plcode, kinds, rnum, around)
+                        hour = to_number(matched.group(4), True)
+                        minute = to_number(matched.group(5), True)
+                        race = Race(rids, plcode, kinds, rnum, around, hour, minute)
                         races.append(race)
                         continue
                     if race:
@@ -371,19 +375,20 @@ def parse_kfile(filepath, races):
                             wave = to_number(matched.group(7))
                             race[0].set_weather(weather, wdir, wind, wave)
                         else:
-                            print("===========================")
-                            print(rids)
-                            print("---")
-                            for racetmp in races:
-                                print(racetmp.ids)
-                            print("===========================")
+                            # print("===========================")
+                            # print(rids)
+                            # print("---")
+                            # for racetmp in races:
+                                # print(racetmp.ids)
+                            # print("===========================")
+                            pass
                         continue
                     if race:
                         matched = kreg4.match(line)
                         matched2 = kreg4_2.match(line)
                         matched3 = kreg9.match(line)
-                        if not matched and matched2:
-                            print(line)
+                        # if not matched and matched2:
+                            # print(line)
                         if matched:
                             rkst = matched.group(1)
                             ids = matched.group(3)
@@ -411,8 +416,10 @@ def parse_kfile(filepath, races):
 
 def get_last_info(races):
 
+    rslt = []
+
     if not races:
-        return
+        return rslt
 
     today = datetime.date.today().strftime("%Y%m%d")
 
@@ -498,6 +505,8 @@ def get_last_info(races):
                                     tme_span = st_div.find("span", class_="table1_boatImage1Time")
                                     if tme_span:
                                         stt = to_number(tme_span.text)
+                                        if stt <= 0:
+                                            stt = 1.0
                                         num_span1 = st_div.find("span", class_="table1_boatImage1Number is-type1")
                                         if num_span1:
                                             if stt >= 0:
@@ -529,34 +538,14 @@ def get_last_info(races):
                                                 web_start_time[5] = stt
                                             web_curse_number[5] = i + 1
 
-        except Exception as e:
-            traceback.print_exc()
+        except Exception:
+            pass
 
-        if weather >= 0:
-            web_weather = weather
-        if wind_direction >= 0:
-            web_wind_direction = wind_direction
-        if wind >= 0:
-            web_wind = wind
-        if wave >= 0:
-            web_wave = wave
-
-        if web_weather < 0 or web_wind_direction < 0 or web_wind < 0 or web_wave < 0:
+        if not web_weather or not web_wind_direction or web_wind < 0 or web_wave < 0:
+            rslt.append(False)
             continue
 
         race.set_weather(web_weather, web_wind_direction, web_wind, web_wave)
-
-        for i in range(len(web_curse_number)):
-            if len(curse_number) > i and curse_number[i] > 0:
-                web_curse_number[i] = curse_number[i]
-
-        for i in range(len(web_start_time)):
-            if len(start_time) > i and start_time[i] > 0:
-                web_start_time[i] = start_time[i]
-
-        for i in range(len(web_exhibition_time)):
-            if len(exhibition_time) > i and exhibition_time[i] > 0:
-                web_exhibition_time[i] = exhibition_time[i]
 
         invalid = []
         for i, curse in enumerate(race.curses):
@@ -576,6 +565,8 @@ def get_last_info(races):
             for i in invalid:
                 del(race.curses[i])
 
+        rslt.append(True)
+
 def to_table(races, predict = False):
     if not races:
         return
@@ -584,8 +575,8 @@ def to_table(races, predict = False):
         lst = race.to_list(predict)
         if lst:
             table.append(lst)
-            if len(lst) < 6:
-                print(lst[0][1])
+            # if len(lst) < 6:
+                # print(lst[0][1])
     return table
 
 def normalize(df, dir_scale, scale_load = False):
@@ -647,33 +638,33 @@ def normalize(df, dir_scale, scale_load = False):
     # 24:curse.racer.other   :one hot
     df["racer_other_participation"] = df[["racer_other_participation","race_number"]].apply(lambda x: get_vector(calc_status(x), [0, 1, 2]), axis = 1)
 
-    print("--- Normalized DataFrame ---")
-    print(df)
+    #print("--- Normalized DataFrame ---")
+    #print(df)
 
     return df
 
 def save_file(df, filepath):
-    print("Save File: " + filepath)
-    print("--- Save Target DataFrame(ALL) ---")
-    print(df)
+    #print("Save File: " + filepath)
+    #print("--- Save Target DataFrame(ALL) ---")
+    #print(df)
     if "dividend" in df.columns:
         df = df.drop(["dividend"], axis=1)
     X = df.iloc[:,2:].apply(lambda x: flatten(x), axis=1).to_numpy().tolist()
-    print("--- Save Target DataFrame(X) ---")
-    print(X)
+    # print("--- Save Target DataFrame(X) ---")
+    # print(X)
     y = df.iloc[:,0].to_numpy()
-    print("--- Save Target DataFrame(y) ---")
-    print(y)
+    # print("--- Save Target DataFrame(y) ---")
+    # print(y)
     qid = df.iloc[:,1].to_numpy()
-    print("--- Save Target DataFrame(qid) ---")
-    print(qid)
+    # print("--- Save Target DataFrame(qid) ---")
+    # print(qid)
     with open(filepath, "wb") as f:
         sklearn.datasets.dump_svmlight_file(X, y, f, zero_based=False, query_id=qid)
 
 def save_file_as_csv(table, filepath):
-    print("Save File: " + filepath)
-    print("--- Save Target Csv Data ---")
-    print(table)
+    # print("Save File: " + filepath)
+    # print("--- Save Target Csv Data ---")
+    # print(table)
     with open(filepath, 'wt', newline="") as f:
         writer = csv.writer(f)
         writer.writerow(csvhead)
@@ -735,7 +726,7 @@ def calc_condition(rank_list):
 
 def calc_status(val):
     status = 0
-    splited = val[0].strip().split()
+    splited = str(val[0]).strip().split()
     current = np.where(val[1] == 1)[0][0] + 1
     if current > 0:
         for item in splited:
@@ -848,26 +839,35 @@ def print_race_info(y, m, d, download_dir):
     with codecs.open(bpath, "r", "cp932", "ignore") as f:
         for line in iter(f.readline, ""):
             line = line.rstrip("\r\n")
-            print(line)
+            # print(line)
 
-def get_predict_data(y, m, d, download_dir, pnum, rnum, predict_save_dir, scale_dir):
-    bpath = download_bfile(y, m, d, download_dir)
+def get_predict_data(dt, download_dir, predict_save_dir, scale_dir):
+    bpath = download_bfile(dt.year, dt.month, dt.day, download_dir)
     if not bpath:
         return
+    ispast = False
+    if dt.date() < datetime.datetime().now().date():
+        ispast = True
+    dt1 = dt + datetime.timedelta(minutes = 5)
+    dt2 = dt + datetime.timedelta(minutes = 45)
     races = parse_bfile(bpath)
     if races:
-        race = [v for v in races if v.place == pnum and v.number == rnum]
-        if race:
-            get_last_info(race)
-            table = to_table(race, True)
-            svcsvfile = os.path.join(predict_save_dir, "predict.csv")
-            if os.path.isfile(svcsvfile):
-                os.remove(svcsvfile)
-            save_file_as_csv(table, svcsvfile)
-            df_src = pd.read_csv(svcsvfile)
-            df = normalize(df_src, scale_dir, True)
-            svfile = os.path.join(predict_save_dir, "predict.txt")
-            if os.path.isfile(svfile):
-                os.remove(svfile)
-            save_file(df, svfile)
+        for race in races:
+            if not ispast:
+                dtr = datetime.datetime(dt.year, dt.month, dt.day, race.hour, race.minute, 0, 0)
+                if dt1 >= dtr or dtr >= dt2:
+                    continue
+            svfile = os.path.join(predict_save_dir, "predict_{0}{1}{2}_{3}_{4}.txt".format(dt.year, dt.month, dt.day, race.place, race.number))
+            if not os.path.isfile(svfile):
+                svcsvfile = os.path.join(predict_save_dir, "predict_{0}{1}{2}_{3}_{4}.csv".format(dt.year, dt.month, dt.day, race.place, race.number))
+                if not os.path.isfile(svcsvfile):
+                    rslt = get_last_info([race])
+                    if not rslt or not rslt[0]:
+                        continue
+                    table = to_table(race, True)
+                    save_file_as_csv(table, svcsvfile)
+                if os.path.isfile(svcsvfile):
+                    df_src = pd.read_csv(svcsvfile)
+                    df = normalize(df_src, scale_dir, True)
+                    save_file(df, svfile)
 

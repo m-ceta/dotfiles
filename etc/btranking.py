@@ -118,7 +118,7 @@ def my_cross_validation_run(self, data_dict, eval_dict, sf_para_dict, model_para
             train_ndcgs_folds.append(train_ndcgs)
             test_ndcgs_folds.append(test_ndcgs)
 
-        dir_fold = os.path.join(self.dir_run, "Fold{0}".format(fold_k)) + "\\"
+        dir_fold = os.path.join(self.dir_run, "Fold{0}".format(fold_k)) + "/"
         ranker.save(dir=dir_fold, name="net_params.pkl")
         print("=========================================================", flush=True)
         print("Fold- {0}: Finish. ({1})".format(fold_k, time_to_string(time.time() - ut)), flush=True)
