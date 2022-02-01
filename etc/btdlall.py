@@ -506,7 +506,7 @@ def get_last_info(races):
                                     if tme_span:
                                         stt = to_number(tme_span.text)
                                         if stt <= 0:
-                                            stt = 1.0
+                                            stt = 0.5 
                                         num_span1 = st_div.find("span", class_="table1_boatImage1Number is-type1")
                                         if num_span1:
                                             if stt >= 0:
