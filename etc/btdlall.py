@@ -23,6 +23,11 @@ burl = "https://www.boatrace.jp/owpc/pc/race/beforeinfo?rno={0}&jcd={1}&hd={2}"
 wreg1 = re.compile(r".*is-wind([0-9]+)")
 wreg2 = re.compile(r"([0-9]+).*")
 
+rurl = "https://www.boatrace.jp/owpc/pc/data/racersearch/season?toban={0}"
+rreg1 = re.compile(r"([0-9]+).*")
+
+ourl = "https://www.boatrace.jp/owpc/pc/race/oddstf?rno={0}&jcd={1}&hd={2}"
+
 ktxtfile = "K{0}{1:02}{2:02}.TXT"
 ksavfile = "k{0}{1:02}{2:02}.lzh"
 kurlbase = "http://www1.mbrace.or.jp/od2/K/{0}{1:02}/"
@@ -501,52 +506,31 @@ def get_last_info(races):
                             for i, st_tr in enumerate(st_tr_all):
                                 st_div = st_tr.find("div", class_="table1_boatImage1")
                                 if st_div:
-                                    num_span = st_div.find("span", class_="table1_boatImage1Number is-type")
-                                    tme_span = st_div.find("span", class_="table1_boatImage1Time")
-                                    if tme_span:
+                                    num_span = st_div.find("span", class_=lambda value: value and value.startswith("table1_boatImage1Number"))
+                                    tme_span = st_div.find("span", class_=lambda value: value and value.startswith("table1_boatImage1Time"))
+                                    if tme_span and num_span:
                                         stt = to_number(tme_span.text)
-                                        if stt <= 0:
-                                            stt = 0.5 
-                                        num_span1 = st_div.find("span", class_="table1_boatImage1Number is-type1")
-                                        if num_span1:
-                                            if stt >= 0:
-                                                web_start_time[0] = stt
-                                            web_curse_number[0] = i + 1
-                                        num_span2 = st_div.find("span", class_="table1_boatImage1Number is-type2")
-                                        if num_span2:
-                                            if stt >= 0:
-                                                web_start_time[1] = stt
-                                            web_curse_number[1] = i + 1
-                                        num_span3 = st_div.find("span", class_="table1_boatImage1Number is-type3")
-                                        if num_span3:
-                                            if stt >= 0:
-                                                web_start_time[2] = stt
-                                            web_curse_number[2] = i + 1
-                                        num_span4 = st_div.find("span", class_="table1_boatImage1Number is-type4")
-                                        if num_span4:
-                                            if stt >= 0:
-                                                web_start_time[3] = stt
-                                            web_curse_number[3] = i + 1
-                                        num_span5 = st_div.find("span", class_="table1_boatImage1Number is-type5")
-                                        if num_span5:
-                                            if stt >= 0:
-                                                web_start_time[4] = stt
-                                            web_curse_number[4] = i + 1
-                                        num_span6 = st_div.find("span", class_="table1_boatImage1Number is-type6")
-                                        if num_span6:
-                                            if stt >= 0:
-                                                web_start_time[5] = stt
-                                            web_curse_number[5] = i + 1
+                                        num = to_number(num_span.text, True)
+                                        if num >= 1 and num <= 6:
+                                            web_start_time[num - 1] = stt
+                                            web_curse_number[num - 1] = i + 1
 
         except Exception:
-            pass
-
+            import traceback; traceback.print_exc()
+            print("Error!: {0}_{1}".format(race.place, race.number))
+        
+        print("get result {0}_{1}".format(race.place, race.number))
+        print("---")
+        print("weather={0}, wind_dir={1}, wind={2}, wave={3}".format(web_weather, web_wind_direction, web_wind, web_wave))
+        print(web_start_time)
+        print(web_exhibition_time)
+        print("---")
+        
         if not web_weather or not web_wind_direction or web_wind < 0 or web_wave < 0:
             rslt.append(False)
             continue
 
         race.set_weather(web_weather, web_wind_direction, web_wind, web_wave)
-
         invalid = []
         for i, curse in enumerate(race.curses):
             num = to_number(curse.number, True)
@@ -554,9 +538,23 @@ def get_last_info(races):
                 curse.set_number(web_curse_number[num - 1])
             elif not i in invalid:
                 invalid.append(i)
-            if len(web_start_time) >= num and web_start_time[num - 1] > 0 \
-                    and len(web_exhibition_time) >= num and web_exhibition_time[num - 1] > 0:
-                curse.set_time(web_start_time[num - 1], web_exhibition_time[num - 1])
+            if len(web_start_time) >= num and len(web_exhibition_time) >= num:
+                mean_st_info = get_start_time(curse.racer.ids)
+                if mean_st_info and mean_st_info[0] >= 0:
+                    mean_st = mean_st_info[0]
+                    if web_start_time[num - 1] - mean_st_info[0] > 0.1:
+                        mean_st += 0.03
+                    elif web_start_time[num - 1] - mean_st_info[0] < -0.1:
+                        mean_st -= 0.03
+                    if mean_st_info[1] >= 2:
+                        mean_st += 0.06
+                    elif mean_st_info[1] >= 1:
+                        mean_st += 0.03
+                    curse.set_time(round(mean_st, 3), web_exhibition_time[num - 1])
+                elif web_start_time[num - 1] > 0:
+                    curse.set_time(web_start_time[num - 1], web_exhibition_time[num - 1])
+                else:
+                    curse.set_time(0.3, web_exhibition_time[num - 1])
             elif not i in invalid:
                 invalid.append(i)
 
@@ -564,9 +562,36 @@ def get_last_info(races):
             invalid.reverse()
             for i in invalid:
                 del(race.curses[i])
-
         rslt.append(True)
+    return rslt
 
+def get_start_time(racer_number):
+    st = -1
+    ft = -1
+    url = rurl.format(racer_number)
+    try:
+        with urllib.request.urlopen(url) as response:
+            response = urllib.request.urlopen(url)
+            content = response.read()
+            html = content.decode()
+            soup = BeautifulSoup(html, "lxml")
+            main_div = soup.find("div", class_="l-mainWrap is-type3")
+            if main_div:
+                table =  main_div.find("table", class_="is-w832")
+                if table:
+                    tbody_all = table.findAll("tbody")
+                    if tbody_all and len(tbody_all) >= 4:
+                        td_all = tbody_all[3].findAll("td")
+                        if td_all and len(td_all) >= 2:
+                            st = to_number(td_all[0].text)
+                            matched = rreg1.match(td_all[1].text)
+                            if matched:
+                                ft = to_number(matched.group(1), True)
+    except Exception:
+        print("Error!: cannot get a start time of {0}.".format(racer_number))
+        
+    return st, ft
+    
 def to_table(races, predict = False):
     if not races:
         return
@@ -660,6 +685,20 @@ def save_file(df, filepath):
     # print(qid)
     with open(filepath, "wb") as f:
         sklearn.datasets.dump_svmlight_file(X, y, f, zero_based=False, query_id=qid)
+    if os.path.isfile(filepath):
+        contents = []
+        update = True
+        with open(filepath, "rt") as f:
+            for line in f.readlines():
+                data = line.strip()
+                if data.find("188:") < 0:
+                    contents.append(data + " 188:0")
+                else:
+                    contents.append(data)
+                    update = False
+        if update:
+            with open(filepath, "wt") as f:
+                f.write("\n".join(contents))
 
 def save_file_as_csv(table, filepath):
     # print("Save File: " + filepath)
@@ -832,42 +871,70 @@ def csv_to_svmlight(data_dir):
         save_file(df_test, os.path.join(fold_dir, "test.txt"))
         save_file(df_train, os.path.join(fold_dir, "train.txt"))
 
-def print_race_info(y, m, d, download_dir):
-    bpath = download_bfile(y, m, d, download_dir)
-    if not bpath:
-        return
-    with codecs.open(bpath, "r", "cp932", "ignore") as f:
-        for line in iter(f.readline, ""):
-            line = line.rstrip("\r\n")
-            # print(line)
+def get_races_at(year, month, day, download_dir):
+    bpath = download_bfile(year, month, day, download_dir)
+    if bpath:
+        races = parse_bfile(bpath)
+        return races
+    return None
 
-def get_predict_data(dt, download_dir, predict_save_dir, scale_dir):
-    bpath = download_bfile(dt.year, dt.month, dt.day, download_dir)
-    if not bpath:
-        return
-    ispast = False
-    if dt.date() < datetime.datetime().now().date():
-        ispast = True
-    dt1 = dt + datetime.timedelta(minutes = 5)
-    dt2 = dt + datetime.timedelta(minutes = 45)
-    races = parse_bfile(bpath)
-    if races:
-        for race in races:
-            if not ispast:
-                dtr = datetime.datetime(dt.year, dt.month, dt.day, race.hour, race.minute, 0, 0)
-                if dt1 >= dtr or dtr >= dt2:
-                    continue
-            svfile = os.path.join(predict_save_dir, "predict_{0}{1}{2}_{3}_{4}.txt".format(dt.year, dt.month, dt.day, race.place, race.number))
-            if not os.path.isfile(svfile):
-                svcsvfile = os.path.join(predict_save_dir, "predict_{0}{1}{2}_{3}_{4}.csv".format(dt.year, dt.month, dt.day, race.place, race.number))
-                if not os.path.isfile(svcsvfile):
-                    rslt = get_last_info([race])
-                    if not rslt or not rslt[0]:
-                        continue
-                    table = to_table(race, True)
-                    save_file_as_csv(table, svcsvfile)
-                if os.path.isfile(svcsvfile):
-                    df_src = pd.read_csv(svcsvfile)
-                    df = normalize(df_src, scale_dir, True)
-                    save_file(df, svfile)
+def is_recommended(race):
+    glst = [RCRGLABEL.index(x.racer.group) for x in sorted(race.curses, key=lambda x: x.number) if x.racer.group in RCRGLABEL]
+    if glst == sorted(glst):
+        return True
+    return False
+
+def is_recommended_place(race):
+    if race.place in (8, 9, 24):
+        return True
+    return False
+
+def is_recommended_number(race):
+    if race.number in (5, 6, 7, 8, 11, 12):
+        return True
+    return False
+
+def save_predict_text(race, predict_save_dir, scale_dir):
+    if race:
+        lst = [race]
+        rslt = get_last_info(lst)
+        if rslt and rslt[0]:
+            datalst = []
+            table = to_table(lst, True)
+            for tg in table:
+                for row in tg:
+                    datalst.append(flatten(row))
+            df_src = pd.DataFrame(datalst, columns=csvhead)
+            df = normalize(df_src, scale_dir, True)
+            svfile = os.path.join(predict_save_dir, "predict_.txt")
+            if os.path.isfile(svfile):
+                os.remove(svfile)
+            save_file(df, svfile)
+            return svfile
+    return None
+
+def get_odds(race, stdt):
+    rslt = [0, 0, 0, 0, 0, 0]
+    url = ourl.format(race.number, race.place, stdt)
+    try:
+        with urllib.request.urlopen(url) as response:
+            response = urllib.request.urlopen(url)
+            content = response.read()
+            html = content.decode()
+            soup = BeautifulSoup(html, "lxml")
+            odds_table = soup.find("table", class_="is-w495")
+            if odds_table:
+                tbody_all = odds_table.findAll("tbody")
+                if tbody_all:
+                    for tbody in tbody_all:
+                        curse_td = tbody.find("td", class_=lambda value: value and value.startswith("is_fs14"))
+                        odds_td = tbody.find("td", class_="oddsPoint")
+                        if curse_td and odds_td:
+                            curse = to_number(curse_td.text, True)
+                            odds = to_number(odds_td.text)
+                            if curse >= 1 and curse <= 6 and odds > 0:
+                                rslt[curse - 1] = odds
+    except:
+        pass
+    return rslt
 
