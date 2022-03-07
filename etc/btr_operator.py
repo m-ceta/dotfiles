@@ -57,11 +57,11 @@ def predict_and_buy(race, stdt):
     ranks, sorted_ndcg = get_ranking(pred.to('cpu').detach().numpy().copy())
     d = 1.0 - sorted_ndcg[0] + sorted_ndcg[1]
     if btdlall.is_recommended(race):
-        print("{0}-{1}-{2}".format(ranks[0], ranks[1], ranks[2]))
+        log_output("{0} {1} {2}R: {3}-{4}-{5}".format(stdt, race.place, race.number, ranks[0], ranks[1], ranks[2]), "~/btr.logs")
     if d < 0 and (btdlall.is_recommended_place(race) or btdlall.is_recommended_number(race)):
         odds = btdlall.get_odds(race, stdt)
         if odds and len(odds) >= ranks[0] and odds[ranks[0] - 1] > 2.0:
-            print(ranks[0])
+            log_output("{0} {1} {2}R: {3}".format(stdt, race.place, race.number, ranks[0]), "~/btr.logs")
     return schedule.CancelJob()
 
 def clear():
@@ -87,15 +87,17 @@ def buy_ticket(pcode, rnum, ticket_type, ticket_rank, amount):
     form.submit()
     driver.close()
 
+def log_output(msg, filepath):
+    with open(filepath, "at") as f:
+        f.write(msg + "\n")
+
 def run():
     schedule.every().day.at("08:00").do(init)
     schedule.every().day.at("21:00").do(clear)
-
     dt = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
     dt_init = datetime.datetime(dt.year, dt.month, dt.day, 8, 0, 0, 0)
     if dt > dt_init:
         init()
-
     while True:
         schedule.run_pending()
         time.sleep(10)
