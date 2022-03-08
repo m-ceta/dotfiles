@@ -79,12 +79,31 @@ def get_ranking(pred_results):
         ranks.append(rank)
     return ranks, sorted_ndcg
 
-def buy_ticket(pcode, rnum, ticket_type, ticket_rank, amount):
+def buy_ticket(pcode, rnum, bet, amount):
     driver = webdriver.Chrome()
-    driver.get('https://www.xxx/xxx.html')
-    form = driver.find_element_by_xpath('//*[@id="search"]/input[1]')
-    form.send_keys('Python')
-    form.submit()
+    driver.get('https://ib.mbrace.or.jp/')
+    time.sleep(5)
+
+    # Login
+    form_mno = driver.find_element_by_xpath('//form[@id="loginForm"]//input[@id="memberNo"]')
+    form_pin = driver.find_element_by_xpath('//form[@id="loginForm"]//input[@id="pin"]')
+    form_ath = driver.find_element_by_xpath('//form[@id="loginForm"]//input[@id="authPassword"]')
+    form_btn = driver.find_element_by_xpath('//form[@id="loginForm"]//input[@id="loginButton"]')
+    form_mno.send_keys('08211069')
+    form_pin.send_keys('0422')
+    form_ath.send_keys('fQ4P3C')
+    form_btn.click()
+    time.sleep(5)
+
+    # Select Place
+    form_anc = driver.find_element_by_xpath('//ul[@class="selectBox"]/li[@id="jyo{0}"]/a'.format(rnum))
+    form_anc.click()
+    time.sleep(5)
+
+    # Select Race
+
+    # Buy
+
     driver.close()
 
 def log_output(msg, filepath):
