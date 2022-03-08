@@ -35,6 +35,8 @@ cuda = None
 layers = 3
 model_name = "RankMSE"
 
+PLCODE_MAP = {'23': '唐津', '20': '若松', '17': '宮島', '16': '児島', '12': '住之江', '09': '津', '08': '常滑', '07': '蒲郡', '06': '浜名湖', '04': '平和島', '02': '戸田', '22': '福岡', '18': '徳山', '11': '琵琶湖', '10': '三国', '05': '多摩川', '03': '江戸川', '01': '桐生', '24': '大村', '19': '下関', '15': '丸亀', '14': '鳴門', '21': '芦屋', '13': '尼崎'}
+
 def init():
     dt = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
     with redirect_stdout(open(os.devnull, 'w')):
@@ -44,24 +46,27 @@ def init():
             if dt >= dtr:
                 continue
             dtr2 = dtr - datetime.timedelta(minutes = 10)
-            schedule.every().day.at(dtr2.strftime("%H:%M")).do(predict_and_buy, race=race, stdt=dtr.strftime("%Y%m%d")).tag("btr")
+            schedule.every().day.at(dtr2.strftime("%H:%M")).do(predict_and_buy, race=race).tag("btr")
 
-def predict_and_buy(race, stdt):
+def predict_and_buy(race):
     if not os.path.isfile(model_save_path):
         return
     svfile = btdlall.save_predict_text(race, dir_pred, dir_scale)
     if not os.path.isfile(svfile):
         return
+    dt = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
+    stdate = dt.strftime("%Y%m%d")
+    stdatetime = dt.strftime("%Y%m%d %H:%M")
     pred = btranking.predict(model_name, model_save_path, svfile, dir_json, dir_data, dir_out, \
             vali_k, cutoffs, debug, epochs, batch_size, layers, cuda)
     ranks, sorted_ndcg = get_ranking(pred.to('cpu').detach().numpy().copy())
     d = 1.0 - sorted_ndcg[0] + sorted_ndcg[1]
     if btdlall.is_recommended(race):
-        log_output("{0} {1} {2}R: {3}-{4}-{5}".format(stdt, race.place, race.number, ranks[0], ranks[1], ranks[2]), "~/btr.logs")
+        log_output("{0},{1},{2}R,{3}-{4}-{5}".format(stdatetime, PLCODE_MAP[str(race.place).zfill(2)], race.number, ranks[0], ranks[1], ranks[2]), "btr.logs")
     if d < 0 and (btdlall.is_recommended_place(race) or btdlall.is_recommended_number(race)):
-        odds = btdlall.get_odds(race, stdt)
+        odds = btdlall.get_odds(race, stdate)
         if odds and len(odds) >= ranks[0] and odds[ranks[0] - 1] > 2.0:
-            log_output("{0} {1} {2}R: {3}".format(stdt, race.place, race.number, ranks[0]), "~/btr.logs")
+            log_output("{0},{1},{2}R,{3}".format(stdatetime, PLCODE_MAP[str(race.place).zfill(2)], race.number, ranks[0]), "btr.logs")
     return schedule.CancelJob()
 
 def clear():
