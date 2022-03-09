@@ -6,6 +6,7 @@ import re
 import time
 import datetime
 import schedule
+import csv
 import numpy as np
 import pandas as pd
 from contextlib import redirect_stdout
@@ -61,12 +62,18 @@ def predict_and_buy(race):
             vali_k, cutoffs, debug, epochs, batch_size, layers, cuda)
     ranks, sorted_ndcg = get_ranking(pred.to('cpu').detach().numpy().copy())
     d = 1.0 - sorted_ndcg[0] + sorted_ndcg[1]
+    log = [stdatetime, race.place, PLCODE_MAP[str(race.place).zfill(2)], race.number, "{0}-{1}-{2}".format(ranks[0], ranks[1], ranks[2])]
+    buy1 = ""
+    buy2 = ""
     if btdlall.is_recommended(race):
-        log_output("{0},{1},{2}R,{3}-{4}-{5}".format(stdatetime, PLCODE_MAP[str(race.place).zfill(2)], race.number, ranks[0], ranks[1], ranks[2]), "btr.logs")
+        buy1 = "*"
     if d < 0 and (btdlall.is_recommended_place(race) or btdlall.is_recommended_number(race)):
-        odds = btdlall.get_odds(race, stdate)
+        odds = btdlall.get_odds(race.place, race.number, stdate)
         if odds and len(odds) >= ranks[0] and odds[ranks[0] - 1] > 2.0:
-            log_output("{0},{1},{2}R,{3}".format(stdatetime, PLCODE_MAP[str(race.place).zfill(2)], race.number, ranks[0]), "btr.logs")
+            buy2 = "*"
+    log.append(buy1)
+    log.append(buy2)
+    log_output(log, stdate)
     return schedule.CancelJob()
 
 def clear():
@@ -111,13 +118,54 @@ def buy_ticket(pcode, rnum, bet, amount):
 
     driver.close()
 
-def log_output(msg, filepath):
-    with open(filepath, "at") as f:
-        f.write(msg + "\n")
+def output_race_results():
+    dt = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
+    stdate = dt.strftime("%Y%m%d")
+    newdata = []
+    with open("btr_{0}.logs".format(stdate), encoding='utf8', newline='') as f:
+        csvreader = csv.reader(f)
+        for row in csvreader:
+            newrow = []
+            newrow.extend(row)
+            rslt = None
+            try:
+                rslt = btdlall.get_race_results(int(row[1]), int(row[3]), stdate)
+            except:
+                pass
+            if rslt and "3連単" in rslt.keys():
+                newrow.append("{0} ({1})".format(rslt["3連単"][0], rslt["3連単"][1]))
+            else:
+                newrow.append("")
+            if rslt and "3連複" in rslt.keys():
+                newrow.append("{0} ({1})".format(rslt["3連複"][0], rslt["3連複"][1]))
+            else:
+                newrow.append("")
+            if rslt and "2連単" in rslt.keys():
+                newrow.append("{0} ({1})".format(rslt["2連単"][0], rslt["2連単"][1]))
+            else:
+                newrow.append("")
+            if rslt and "2連複" in rslt.keys():
+                newrow.append("{0} ({1})".format(rslt["2連複"][0], rslt["2連複"][1]))
+            else:
+                newrow.append("")
+            if rslt and "単勝" in rslt.keys():
+                newrow.append("{0} ({1})".format(rslt["単勝"][0], rslt["単勝"][1]))
+            else:
+                newrow.append("")
+            newdata.append(newrow)
+    with open("btr_{0}.logs".format(stdate), 'wt', newline="") as f:
+        writer = csv.writer(f)
+        writer.writerows(newdata)
+
+def log_output(row, stdate):
+    with open("btr_{0}.logs".format(stdate), 'at', newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(row)
 
 def run():
     schedule.every().day.at("08:00").do(init)
     schedule.every().day.at("21:00").do(clear)
+    schedule.every().day.at("21:10").do(output_race_results)
     dt = datetime.datetime.utcnow() + datetime.timedelta(hours=9)
     dt_init = datetime.datetime(dt.year, dt.month, dt.day, 8, 0, 0, 0)
     if dt > dt_init:

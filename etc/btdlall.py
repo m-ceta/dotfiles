@@ -19,14 +19,15 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from bs4 import BeautifulSoup
 
-burl = "https://www.boatrace.jp/owpc/pc/race/beforeinfo?rno={0}&jcd={1}&hd={2}"
+burl = "https://www.boatrace.jp/owpc/pc/race/beforeinfo?rno={0}&jcd={1:02}&hd={2}"
 wreg1 = re.compile(r".*is-wind([0-9]+)")
 wreg2 = re.compile(r"([0-9]+).*")
 
 rurl = "https://www.boatrace.jp/owpc/pc/data/racersearch/season?toban={0}"
 rreg1 = re.compile(r"([0-9]+).*")
 
-ourl = "https://www.boatrace.jp/owpc/pc/race/oddstf?rno={0}&jcd={1}&hd={2}"
+ourl = "https://www.boatrace.jp/owpc/pc/race/oddstf?rno={0}&jcd={1:02}&hd={2}"
+surl = "https://www.boatrace.jp/owpc/pc/race/raceresult?rno={0}&jcd={1:02}&hd={2}"
 
 ktxtfile = "K{0}{1:02}{2:02}.TXT"
 ksavfile = "k{0}{1:02}{2:02}.lzh"
@@ -913,9 +914,9 @@ def save_predict_text(race, predict_save_dir, scale_dir):
             return svfile
     return None
 
-def get_odds(race, stdt):
+def get_odds(pcode, rnum, stdt):
     rslt = [0, 0, 0, 0, 0, 0]
-    url = ourl.format(race.number, race.place, stdt)
+    url = ourl.format(rnum, pcode, stdt)
     try:
         with urllib.request.urlopen(url) as response:
             response = urllib.request.urlopen(url)
@@ -936,5 +937,50 @@ def get_odds(race, stdt):
                                 rslt[curse - 1] = odds
     except:
         pass
+    return rslt
+
+def get_race_results(pcode, rnum, stdt):
+    rslt = {}
+    url = surl.format(rnum, pcode, stdt)
+    try:
+        with urllib.request.urlopen(url) as response:
+            response = urllib.request.urlopen(url)
+            content = response.read()
+            html = content.decode()
+            soup = BeautifulSoup(html, "lxml")
+            rslt_table = soup.findAll("table", class_="is-w495")
+            if rslt_table and len(rslt_table) >= 2:
+                tbody_all = rslt_table[1].findAll("tbody")
+                if tbody_all:
+                    for tbody in tbody_all:
+                        tr = tbody.find("tr")
+                        if tr:
+                            td_all = tr.findAll("td")
+                            if td_all and len(td_all) >= 3:
+                                wtyp = td_all[0].text
+                                if wtyp:
+                                    wtyp = wtyp.strip()
+                                wnnr = get_joined_text_in_span(td_all[1])
+                                if wnnr:
+                                    wnnr = wnnr.strip()
+                                back = td_all[2].text
+                                if back:
+                                    back = back.strip()
+                                if not wtyp in rslt.keys():
+                                    rslt[wtyp] = [wnnr, back]
+    except:
+        pass
+    return rslt
+
+def get_joined_text_in_span(elem):
+    rslt = ""
+    span_all = elem.findAll("span")
+    if span_all:
+        for span in span_all:
+            txt = span.text
+            if txt:
+                txt = txt.strip()
+            if txt:
+                rslt += txt
     return rslt
 
