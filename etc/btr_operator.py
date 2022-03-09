@@ -103,9 +103,9 @@ def buy_ticket(pcode, rnum, bet, amount):
     form_btn = driver.find_element_by_xpath('//form[@id="loginForm"]//input[@id="loginButton"]')
     if not form_mno or not form_pin or not form_ath or not form_btn:
         return
-    form_mno.send_keys('08211069')
-    form_pin.send_keys('0422')
-    form_ath.send_keys('fQ4P3C')
+    form_mno.send_keys('')
+    form_pin.send_keys('')
+    form_ath.send_keys('')
     form_btn.click()
     time.sleep(5)
 
