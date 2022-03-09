@@ -101,6 +101,8 @@ def buy_ticket(pcode, rnum, bet, amount):
     form_pin = driver.find_element_by_xpath('//form[@id="loginForm"]//input[@id="pin"]')
     form_ath = driver.find_element_by_xpath('//form[@id="loginForm"]//input[@id="authPassword"]')
     form_btn = driver.find_element_by_xpath('//form[@id="loginForm"]//input[@id="loginButton"]')
+    if not form_mno or not form_pin or not form_ath or not form_btn:
+        return
     form_mno.send_keys('08211069')
     form_pin.send_keys('0422')
     form_ath.send_keys('fQ4P3C')
@@ -109,6 +111,8 @@ def buy_ticket(pcode, rnum, bet, amount):
 
     # Select Place
     form_anc = driver.find_element_by_xpath('//ul[@class="selectBox"]/li[@id="jyo{0}"]/a'.format(rnum))
+    if not form_anc:
+        return
     form_anc.click()
     time.sleep(5)
 
