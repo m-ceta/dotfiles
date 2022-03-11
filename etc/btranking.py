@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import json
 import torch
 
-#dir_home = os.environ['HOME']
-dir_home = "/content/drive/MyDrive/gcolab_workdir/"
-dir_ptr = os.path.join(dir_home, "ptranking")
+dir_home = os.environ['HOME']
+dir_bt = os.path.join(dir_home, "bt")
+dir_ptr = os.path.join(dir_bt, "ptranking")
 data_id = "BTR2021"
 num_features = 188
 # ===============================================================
