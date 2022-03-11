@@ -67,10 +67,12 @@ def predict_and_buy(race):
     buy2 = ""
     if btdlall.is_recommended(race):
         buy1 = "*"
+        # buy_ticket(race.place, race.number, [ranks[0]], 100, True)
     if d < 0 and (btdlall.is_recommended_place(race) or btdlall.is_recommended_number(race)):
         odds = btdlall.get_odds(race.place, race.number, stdate)
         if odds and len(odds) >= ranks[0] and odds[ranks[0] - 1] > 2.0:
             buy2 = "*"
+            # buy_ticket(race.place, race.number, [ranks[0], ranks[1], ranks[2]], 100, True)
     log.append(buy1)
     log.append(buy2)
     log_output(log, stdate)
@@ -91,7 +93,11 @@ def get_ranking(pred_results):
         ranks.append(rank)
     return ranks, sorted_ndcg
 
-def buy_ticket(pcode, rnum, bet, amount):
+def buy_ticket(pcode, rnum, bet, amount, single = True):
+    mony = int(amount * 0.01)
+    if mony <= 0:
+        return
+
     driver = webdriver.Chrome()
     driver.get('https://ib.mbrace.or.jp/')
     time.sleep(5)
@@ -110,15 +116,69 @@ def buy_ticket(pcode, rnum, bet, amount):
     time.sleep(5)
 
     # Select Place
-    form_anc = driver.find_element_by_xpath('//ul[@class="selectBox"]/li[@id="jyo{0}"]/a'.format(rnum))
+    form_anc = driver.find_element_by_xpath('//main//ul[contains(@class, "selectBox")]/li[@id="jyo{0}"]/a'.format(str(pcode).zfill(2)))
     if not form_anc:
         return
     form_anc.click()
     time.sleep(5)
 
     # Select Race
+    anch_race = driver.find_element_by_xpath('//main//section[@id="raceSelection"]//ul[contains(@class, "clearfix")]/li[@id="selRaceNo{0}"]/a'.format(str(rnum).zfill(2)))
+    anch_race.click()
+    time.sleep(1)
 
     # Buy
+    anch_way1 = driver.find_element_by_xpath('//main//ul[contains(@class, "clearfix")]/li[@id="betway1"]/a')
+    anch_way1.click()
+    time.sleep(1)
+    if len(bet) == 1:
+        anch_kat1 = driver.find_element_by_xpath('//main//ul[contains(@class, "clearfix")]/li[@id="betkati1"]/a')
+        if not single:
+            anch_kat1 = driver.find_element_by_xpath('//main//ul[contains(@class, "clearfix")]/li[@id="betkati2"]/a')
+        anch_kat1.click()
+        time.sleep(1)
+        anch_reg1 = driver.find_element_by_xpath('//main//table[@id="regTable"]//tr[contains(@class, "f{0}")]/td[@id="regbtn_{0}_1"]/a'.format(bet[0]))
+        anch_reg1.click()
+        time.sleep(1)
+    elif len(bet) == 2:
+        anch_kat3 = driver.find_element_by_xpath('//main//ul[contains(@class, "clearfix")]/li[@id="betkati3"]/a')
+        if not single:
+            anch_kat3 = driver.find_element_by_xpath('//main//ul[contains(@class, "clearfix")]/li[@id="betkati4"]/a')
+        anch_kat3.click()
+        time.sleep(1)
+        anch_reg1 = driver.find_element_by_xpath('//main//table[@id="regTable"]//tr[contains(@class, "f{0}")]/td[@id="regbtn_{0}_1"]/a'.format(bet[0]))
+        anch_reg1.click()
+        time.sleep(1)
+        anch_reg2 = driver.find_element_by_xpath('//main//table[@id="regTable"]//tr[contains(@class, "f{0}")]/td[@id="regbtn_{0}_2"]/a'.format(bet[1]))
+        anch_reg2.click()
+        time.sleep(1)
+    elif len(bet) == 3:
+        anch_kat6 = driver.find_element_by_xpath('//main//ul[contains(@class, "clearfix")]/li[@id="betkati6"]/a')
+        if not single:
+            anch_kat6 = driver.find_element_by_xpath('//main//ul[contains(@class, "clearfix")]/li[@id="betkati7"]/a')
+        anch_kat6.click()
+        time.sleep(1)
+        anch_reg1 = driver.find_element_by_xpath('//main//table[@id="regTable"]//tr[contains(@class, "f{0}")]/td[@id="regbtn_{0}_1"]/a'.format(bet[0]))
+        anch_reg1.click()
+        time.sleep(1)
+        anch_reg2 = driver.find_element_by_xpath('//main//table[@id="regTable"]//tr[contains(@class, "f{0}")]/td[@id="regbtn_{0}_2"]/a'.format(bet[1]))
+        anch_reg2.click()
+        time.sleep(1)
+        anch_reg3 = driver.find_element_by_xpath('//main//table[@id="regTable"]//tr[contains(@class, "f{0}")]/td[@id="regbtn_{0}_3"]/a'.format(bet[2]))
+        anch_reg3.click()
+        time.sleep(1)
+
+    form_amnt = driver.find_element_by_xpath('//main//input[@id="amount"]')
+    form_amnt.send_keys(str(mony))
+    time.sleep(1)
+
+    anch_betb = driver.find_element_by_xpath('//main//div[@id="regAmountBtn"]/a')
+    anch_betb.click()
+    time.sleep(1)
+
+    anch_endb = driver.find_element_by_xpath('//main//div[contains(@class, "inputCompletion")]/div[contains(@class, "btnSubmit")]/a')
+    anch_endb.click()
+    time.sleep(3)
 
     driver.close()
 
