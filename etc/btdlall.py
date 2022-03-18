@@ -678,10 +678,10 @@ def save_file(df, filepath):
     X = df.iloc[:,2:].apply(lambda x: flatten(x), axis=1).to_numpy().tolist()
     # print("--- Save Target DataFrame(X) ---")
     # print(X)
-    y = df.iloc[:,0].to_numpy()
+    y = df.iloc[:,0].values
     # print("--- Save Target DataFrame(y) ---")
     # print(y)
-    qid = df.iloc[:,1].to_numpy()
+    qid = df.iloc[:,1].values
     # print("--- Save Target DataFrame(qid) ---")
     # print(qid)
     with open(filepath, "wb") as f:
