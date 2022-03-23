@@ -675,15 +675,15 @@ def save_file(df, filepath):
     #print(df)
     if "dividend" in df.columns:
         df = df.drop(["dividend"], axis=1)
-    X = df.iloc[:,2:].apply(lambda x: flatten(x), axis=1).to_numpy().tolist()
-    # print("--- Save Target DataFrame(X) ---")
-    # print(X)
+    X = df.iloc[:,2:].apply(lambda x: flatten(x), axis=1).values.tolist()
+    print("--- Save Target DataFrame(X) ---")
+    print(X)
     y = df.iloc[:,0].values
-    # print("--- Save Target DataFrame(y) ---")
-    # print(y)
+    print("--- Save Target DataFrame(y) ---")
+    print(y)
     qid = df.iloc[:,1].values
-    # print("--- Save Target DataFrame(qid) ---")
-    # print(qid)
+    print("--- Save Target DataFrame(qid) ---")
+    print(qid)
     with open(filepath, "wb") as f:
         sklearn.datasets.dump_svmlight_file(X, y, f, zero_based=False, query_id=qid)
     if os.path.isfile(filepath):
@@ -910,6 +910,7 @@ def save_predict_text(race, predict_save_dir, scale_dir):
             svfile = os.path.join(predict_save_dir, "predict_.txt")
             if os.path.isfile(svfile):
                 os.remove(svfile)
+            df = df.astype({'id': 'int64', 'racer_id': 'int64'})
             save_file(df, svfile)
             return svfile
     return None
