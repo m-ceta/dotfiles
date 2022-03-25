@@ -17,13 +17,23 @@ NVIM_CLIENT = "nvim-qt --no-ext-tabline --no-ext-popupmenu --server {0}:7777";
 SETTINGS = os.path.join(os.path.expanduser("~"), ".nvimssh")
 
 def exec_sshcommand(server, user, passwd, command):
+    code = -1
+    stdout_data = b''
+    stderr_data = b''
     with paramiko.SSHClient() as client:
-        client.set_missing_host_key_policy(paramiko.WarningPolicy())
+        client.set_missing_host_key_policy(paramiko.MissingHostKeyPolicy())
         try:
             client.connect(server, username = user, password = passwd)
-            client.exec_command(command)
+            channel = client.get_transport().open_session(timeout=10)
+            channel.exec_command(command)
+            RECV_SIZE = 1024 * 32
+            while not channel.closed or channel.recv_ready() or channel.recv_stderr_ready():
+                stdout_data += channel.recv(RECV_SIZE)
+                stderr_data += channel.recv_stderr(RECV_SIZE)
+            code = channel.recv_exit_status()
         except:
             pass
+    return code, stdout_data, stderr_data
 
 def save_params(params):
     if params:
@@ -74,24 +84,21 @@ def run():
     svr = None
     lcl = None
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers = 1) as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             svr = executor.submit(exec_sshcommand, server, user, passwd, NVIM_SERVER.format(server))
-        time.sleep(1)
-        lcl = subprocess.Popen(NVIM_CLIENT.format(server), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            time.sleep(1)
+            lcl = subprocess.Popen(NVIM_CLIENT.format(server).split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            if svr and lcl:
+                while True:
+                    if svr.done() or lcl.poll():
+                        break
+                    time.sleep(0.1)
+            if svr and not svr.done():
+                exec_sshcommand(server, user, passwd, "killall nvim")
+            if lcl and not lcl.poll():
+                lcl.terminate()
     except:
         pass
-    
-    if svr and lcl:
-        while True:
-            if svr.done() or lcl.poll():
-                break
-            time.sleep(0.1)
-    
-    if svr and not svr.done():
-        exec_sshcommand(server, user, passwd, "killall nvim")
-    
-    if lcl and not lcl.poll():
-        lcl.terminate()
     
     save_params([server, user, passwd])
     
