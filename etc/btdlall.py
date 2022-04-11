@@ -929,13 +929,15 @@ def get_odds(pcode, rnum, stdt):
                 tbody_all = odds_table.findAll("tbody")
                 if tbody_all:
                     for tbody in tbody_all:
-                        curse_td = tbody.find("td", class_=lambda value: value and value.startswith("is_fs14"))
-                        odds_td = tbody.find("td", class_="oddsPoint")
-                        if curse_td and odds_td:
-                            curse = to_number(curse_td.text, True)
-                            odds = to_number(odds_td.text)
-                            if curse >= 1 and curse <= 6 and odds > 0:
-                                rslt[curse - 1] = odds
+                        tr = tbody.find("tr")
+                        if tr:
+                            curse_td = tr.find("td", class_=lambda value: value and value.startswith("is-fs14"))
+                            odds_td = tr.find("td", class_="oddsPoint")
+                            if curse_td and odds_td:
+                                curse = to_number(curse_td.text, True)
+                                odds = to_number(odds_td.text)
+                                if curse >= 1 and curse <= 6 and odds > 0:
+                                    rslt[curse - 1] = odds
     except:
         pass
     return rslt
@@ -951,7 +953,7 @@ def get_race_results(pcode, rnum, stdt):
             soup = BeautifulSoup(html, "lxml")
             rslt_table = soup.findAll("table", class_="is-w495")
             if rslt_table and len(rslt_table) >= 2:
-                tbody_all = rslt_table[1].findAll("tbody")
+                tbody_all = rslt_table[2].findAll("tbody")
                 if tbody_all:
                     for tbody in tbody_all:
                         tr = tbody.find("tr")
@@ -966,11 +968,11 @@ def get_race_results(pcode, rnum, stdt):
                                     wnnr = wnnr.strip()
                                 back = td_all[2].text
                                 if back:
-                                    back = back.strip()
+                                    back = back.strip()[1:]
                                 if not wtyp in rslt.keys():
                                     rslt[wtyp] = [wnnr, back]
     except:
-        pass
+        import traceback; traceback.print_exc()
     return rslt
 
 def get_joined_text_in_span(elem):
