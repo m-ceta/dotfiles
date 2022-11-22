@@ -48,13 +48,6 @@ if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
   fi
 fi
 
-# Pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-if command -v pyenv 1>/dev/null 2>&1; then
-  eval "$(pyenv init -)"
-fi
-eval "$(pyenv virtualenv-init -)"
 if [ -d "$HOME/mypypkg" ] ; then
   export PYTHONPATH="$HOME/mypypkg:$PYTHONPATH"
 fi
