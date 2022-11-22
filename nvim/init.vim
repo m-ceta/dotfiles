@@ -42,10 +42,10 @@ set mouse=a
 if exists('g:GuiLoaded')
   GuiTabline 0
   GuiPopupmenu 0
-  GuiFont! ＭＳ\ ゴシック:h14
+  GuiFont! ＭＳ\ ゴシック:h14,Cica:h14,Space\ Mono:h14
   GuiScrollBar 1
 else
-  set guifont=ＭＳ\ ゴシック:h14
+  set guifont=ＭＳ\ ゴシック:h14,Cica:h14,Space\ Mono:h14
   set guioptions+=r
 endif
 
@@ -61,7 +61,7 @@ nnoremap <silent> <C-l> :tabn<CR>
 nnoremap <silent> <C-h> :tabp<CR>
 nnoremap <silent> <C-a> :tab<Space>ba<CR>
 nnoremap <silent> <C-t> :ReuseTerm<CR>
-tnoremap <silent> <C-t> <CR><C-\><C-n>:q<CR>
+tnoremap <silent> <C-t> <C-\><C-n>:q<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
 nnoremap <silent> <F7> :<C-u>echo sytem('cargo run')<CR>
@@ -70,10 +70,10 @@ nnoremap <silent> <F8> :<C-u>echo system('cargo build')<CR>
 nnoremap <silent> <S-F8> :<C-u>echo system('cargo build --release')<CR>
 nmap <Leader>n :CocCommand explorer<CR>
 nmap <Leader>o :CocCommand explorer --open-action-strategy tab --sources=buffer+,file+ --position floating<CR>
-
-"" Python environment
-let g:python3_host_prog = expand('~/nvim-python3/bin/python3')
-let g:python_host_prog = expand('~/nvim-python2/bin/python2')
+nnoremap <silent> <leader>ps :StartIPython<CR>
+nnoremap <silent> <leader>pc :SendCellToIPython<CR>
+nnoremap <silent> <leader>pr :SendRegionToIPython<CR>
+nnoremap <silent> <leader>pa :SendAllToIPython<CR>
 
 " IM OFF command
 if has('win32')
@@ -96,28 +96,120 @@ function! SearchTermBuffer() abort
     endif
   endfor
   return -1
-endfun
+endfunction
 
-function! ReuseTerm() abort
+function! YankString(data) abort
+  if len(a:data) > 0
+    let tmp = @a
+    let @a = join(a:data, "\n") . "\n\n"
+    execute 'normal "ap'
+    let @a = tmp
+  endif
+endfunction
+
+function! GetCellContents() abort
+  let contents = []
+  let cline = line(".")
+  let ccol = col(".")
+  let fline = search("^# %%", "bw") + 1
+  let aline = search("^# %%", "w") - 1
+  if fline > 0 && aline > 0 && aline - fline > 0
+    let contents = getline(fline, aline)
+  endif
+  call cursor(cline, ccol)
+  return contents
+endfunction
+
+function! GetRegionContents() abort
+  let first = a:firstline
+  let end   = a:lastline
+  if first == 0
+    let first = 1
+  endif
+  if end == 0
+    let end = line("$")
+  endif
+  let contents = getline(first, end)
+  return contents
+endfunction
+
+function! ReuseTerm(reuse_only, change_term) abort
   if stridx(bufname(), 'term:') == 0
     quit
   else
     let num = SearchTermBuffer()
     if num  >= 0
-      botright new   
-      let cbn = bufnr('%')
-      execute num.'buffer'
-      execute 'bwipeout '.cbn
-      startinsert
-    else
-      botright new   
+      let wnr = win_findbuf(num)
+      if len(wnr) > 0
+        call win_gotoid(wnr[0])
+        if a:change_term == 1
+          startinsert
+        endif
+        return 1
+      else
+        botright new
+        let cbn = bufnr('%')
+        execute num.'buffer'
+        execute 'bwipeout '.cbn
+        if a:change_term == 1
+          startinsert
+        endif
+        return 1
+      endif
+    elseif a:reuse_only != 1
+      botright new
       call termopen($SHELL)
-      startinsert
+      if a:change_term == 1
+        startinsert
+      endif
+      return 1
     endif
   endif
-endfun
+  return 0
+endfunction
+command! ReuseTerm :call ReuseTerm(0, 1)
 
-command! ReuseTerm :call ReuseTerm()
+function! SendToIPython(cmd)
+  let num = bufnr()
+  let wnr = win_findbuf(num)
+  let contents = []
+  if a:cmd == 0
+    let contents = GetCellContents()
+  elseif a:cmd == 1
+    let contents = GetRegionContents()
+  elseif a:cmd == 2
+    let first = 1
+    let end = line("$")
+    let contents = getline(first, end)
+  endif
+  if len(contents) > 0
+    let ret = ReuseTerm(1, 0)
+    if ret == 1
+      call YankString(contents)
+    else
+      echo "Please run ipython !"
+    endif
+    if len(wnr) > 0
+      call win_gotoid(wnr[0])
+    endif
+  endif
+endfunction
+command! SendCellToIPython :call SendToIPython(0)
+command! -range=% SendRegionToIPython :call SendToIPython(1)
+command! SendAllToIPython :call SendToIPython(2)
+
+function! StartIPython()
+  let num = bufnr()
+  let wnr = win_findbuf(num)
+  let ret = ReuseTerm(0, 0)
+  if ret == 1
+    call YankString(["ipython"])
+  endif
+  if len(wnr) > 0
+    call win_gotoid(wnr[0])
+  endif
+endfunction
+command! StartIPython :call StartIPython()
 
 "" Dein
 let s:cache_home = empty($XDG_CACHE_HOME) ? expand('~/.cache') : $XDG_CACHE_HOME

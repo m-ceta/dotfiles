@@ -80,6 +80,13 @@ call quickui#menu#install("&Rust", [
                         \ ["&Build\t(F8)", 'echo system("cargo build")'],
                         \ ["Build &Release\tShift+(F8)", 'echo system("cargo build --release")'],
                         \ ], '<auto>', 'rust')
+call quickui#menu#install("&Python", [
+                        \ ["Send &cell to ipython\t(leader)pc", 'SendCellToIPython'],
+                        \ ["Send &region to ipython\t(leader)pr", 'SendRegionToIPython'],
+                        \ ["Send &all to ipython\t(leader)pa", 'SendAllToIPython'],
+                        \ ["---", ''],
+                        \ ["Start &ipython\t(leader)ps", 'StartIPython'],
+                        \ ], '<auto>', 'python')
 call quickui#menu#install("&Git", [
                         \ ['&Add', 'Git add %'],
                         \ ['&Commit', 'Git commit'],
