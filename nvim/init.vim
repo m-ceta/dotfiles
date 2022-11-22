@@ -71,6 +71,7 @@ nnoremap <silent> <S-F8> :<C-u>echo system('cargo build --release')<CR>
 nmap <Leader>n :CocCommand explorer<CR>
 nmap <Leader>o :CocCommand explorer --open-action-strategy tab --sources=buffer+,file+ --position floating<CR>
 nnoremap <silent> <leader>ps :StartIPython<CR>
+tnoremap <silent> <leader>ps <C-\><C-n>:q<CR>
 nnoremap <silent> <leader>pc :SendCellToIPython<CR>
 nnoremap <silent> <leader>pr :SendRegionToIPython<CR>
 nnoremap <silent> <leader>pa :SendAllToIPython<CR>
@@ -89,9 +90,10 @@ else
 endif
 
 "" Terminal
-function! SearchTermBuffer() abort
+function! SearchTermBuffer(shell) abort
   for num in nvim_list_bufs()
-    if stridx(bufname(num), 'term:') == 0
+    let buf = bufname(num)
+    if stridx(buf, 'term:') == 0 && stridx(buf, a:shell) > 0
       return num
     endif
   endfor
@@ -101,8 +103,8 @@ endfunction
 function! YankString(data) abort
   if len(a:data) > 0
     let tmp = @a
-    let @a = join(a:data, "\n") . "\n\n"
-    execute 'normal "ap'
+    let @a = join(a:data, "\n")
+    execute 'normal! "ap'
     let @a = tmp
   endif
 endfunction
@@ -133,19 +135,26 @@ function! GetRegionContents() abort
   return contents
 endfunction
 
-function! ReuseTerm(reuse_only, change_term) abort
-  if stridx(bufname(), 'term:') == 0
+function! ReuseTerm(reuse_only, change_term, shell) abort
+  let shellname = '/bin/bash'
+  if strlen(a:shell) > 0
+    let shellname = a:shell
+  endif
+  let buf = bufname()
+  if stridx(buf, 'term:') == 0 && stridx(buf, shellname) > 0
     quit
   else
-    let num = SearchTermBuffer()
+    let num = SearchTermBuffer(shellname)
     if num  >= 0
       let wnr = win_findbuf(num)
       if len(wnr) > 0
         call win_gotoid(wnr[0])
         if a:change_term == 1
           startinsert
+        else
+          quit
         endif
-        return 1
+        return 3
       else
         botright new
         let cbn = bufnr('%')
@@ -154,11 +163,11 @@ function! ReuseTerm(reuse_only, change_term) abort
         if a:change_term == 1
           startinsert
         endif
-        return 1
+        return 2
       endif
     elseif a:reuse_only != 1
       botright new
-      call termopen($SHELL)
+      call termopen(shellname)
       if a:change_term == 1
         startinsert
       endif
@@ -167,11 +176,11 @@ function! ReuseTerm(reuse_only, change_term) abort
   endif
   return 0
 endfunction
-command! ReuseTerm :call ReuseTerm(0, 1)
+command! ReuseTerm :call ReuseTerm(0, 1, $SHELL)
 
 function! SendToIPython(cmd)
-  let num = bufnr()
-  let wnr = win_findbuf(num)
+  "let num = bufnr()
+  "let wnr = win_findbuf(num)
   let contents = []
   if a:cmd == 0
     let contents = GetCellContents()
@@ -183,15 +192,17 @@ function! SendToIPython(cmd)
     let contents = getline(first, end)
   endif
   if len(contents) > 0
-    let ret = ReuseTerm(1, 0)
-    if ret == 1
+    let ret = ReuseTerm(1, 1, "ipython3")
+    if ret != 0
+      sleep 100m
       call YankString(contents)
+      "stopinsert
     else
       echo "Please run ipython !"
     endif
-    if len(wnr) > 0
-      call win_gotoid(wnr[0])
-    endif
+    "if len(wnr) > 0
+    "  call win_gotoid(wnr[0])
+    "endif
   endif
 endfunction
 command! SendCellToIPython :call SendToIPython(0)
@@ -201,10 +212,7 @@ command! SendAllToIPython :call SendToIPython(2)
 function! StartIPython()
   let num = bufnr()
   let wnr = win_findbuf(num)
-  let ret = ReuseTerm(0, 0)
-  if ret == 1
-    call YankString(["ipython"])
-  endif
+  call ReuseTerm(0, 0, "ipython3")
   if len(wnr) > 0
     call win_gotoid(wnr[0])
   endif
