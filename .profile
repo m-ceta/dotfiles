@@ -65,3 +65,4 @@ export NDK_HOME=$ANDROID_NDK_ROOT
 # Neovim
 export XDG_CONFIG_HOME=$HOME/.config
 export XDG_CACHE_HOME=$HOME/.cache
+. "$HOME/.cargo/env"

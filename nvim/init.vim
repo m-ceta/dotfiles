@@ -42,10 +42,10 @@ set mouse=a
 if exists('g:GuiLoaded')
   GuiTabline 0
   GuiPopupmenu 0
-  GuiFont! ＭＳ\ ゴシック:h14,Cica:h14,Space\ Mono:h14
+  GuiFont! ＭＳ\ ゴシック:h14,DejaVu\ Sans\ Mono:h14
   GuiScrollBar 1
 else
-  set guifont=ＭＳ\ ゴシック:h14,Cica:h14,Space\ Mono:h14
+  set guifont=ＭＳ\ ゴシック:h14,DejaVu\ Sans\ Mono:h14
   set guioptions+=r
 endif
 

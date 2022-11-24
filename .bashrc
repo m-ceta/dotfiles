@@ -133,3 +133,4 @@ fi
 # LANG
 export LANG=ja_JP.UTF-8
 export LANGUAGE=ja
+. "$HOME/.cargo/env"

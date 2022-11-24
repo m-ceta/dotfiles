@@ -72,7 +72,7 @@ call quickui#menu#install("&Debug", [
                         \ ["Step Out\tShift+(F11)", 'call vimspector#StepOut()'],
                         \ ["---", ''],
                         \ ["&Breakpoint\t(F9)", 'call vimspector#ToggleBreakpoint()'],
-                        \ ])
+                        \ ], '<auto>', 'rust,python')
 call quickui#menu#install("&Rust", [
                         \ ["&Run\t(F7)", 'echo system("cargo run")'],
                         \ ["&Check\tShift+(F7)", 'echo system("cargo check")'],
