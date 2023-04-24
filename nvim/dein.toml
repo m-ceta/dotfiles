@@ -123,3 +123,6 @@ hook_add = '''
   let g:jupytext_filetype_map = {'py': 'python'}
 '''
 
+[[plugins]]
+repo = 'github/copilot.vim'
+
