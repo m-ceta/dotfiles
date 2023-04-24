@@ -47,6 +47,7 @@ if [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
     export QT_IM_MODULE=fcitx
     export XMODIFIERS="@im=fcitx"
     export DefaultIMModule=fcitx
+    export NODE_TLS_REJECT_UNAUTHORIZED=0
     xset -r 49
   fi
 fi
