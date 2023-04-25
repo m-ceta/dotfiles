@@ -126,7 +126,7 @@ hook_add = '''
 [[plugins]]
 repo = 'github/copilot.vim'
 hook_add = '''
-  if glob('/proc/sys/fs/binfmt_misc/WSLInterop')
+  if glob('/proc/sys/fs/binfmt_misc/WSLInterop') != ''
     let g:copilot_proxy_strict_ssl = v:false
     let g:copilot_proxy = '192.168.109.170:8080'
   endif
