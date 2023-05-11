@@ -64,7 +64,7 @@ nnoremap <silent> <C-t> :ReuseTerm<CR>
 tnoremap <silent> <C-t> <C-\><C-n>:q<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
-nnoremap <silent> <F7> :<C-u>echo sytem('cargo run')<CR>
+nnoremap <silent> <F7> :<C-u>echo sytsem('cargo run')<CR>
 nnoremap <silent> <S-F7> :<C-u>echo system('cargo check')<CR>
 nnoremap <silent> <F8> :<C-u>echo system('cargo build')<CR>
 nnoremap <silent> <S-F8> :<C-u>echo system('cargo build --release')<CR>
@@ -226,17 +226,19 @@ let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'
 if !isdirectory(s:dein_repo_dir)
   call system('git clone https://github.com/Shougo/dein.vim ' . shellescape(s:dein_repo_dir))
 endif
+if isdirectory(s:dein_repo_dir)
+  if dein#load_state('~/.cache/dein')
+    call dein#begin('~/.cache/dein')
+    call dein#load_toml('~/.config/nvim/dein.toml', {'lazy': 0})
+    call dein#load_toml('~/.config/nvim/dein_lazy.toml', {'lazy': 1})
+    call dein#end()
+    call dein#save_state()
+  endif
+  if dein#check_install()
+    call dein#install()
+  endif
+endif
 
-if dein#load_state('~/.cache/dein')
-  call dein#begin('~/.cache/dein')
-  call dein#load_toml('~/.config/nvim/dein.toml', {'lazy': 0})
-  call dein#load_toml('~/.config/nvim/dein_lazy.toml', {'lazy': 1})
-  call dein#end()
-  call dein#save_state()
-endif
-if dein#check_install()
-  call dein#install()
-endif
 filetype plugin indent on
 syntax enable
 
