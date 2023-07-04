@@ -123,12 +123,12 @@ hook_add = '''
   let g:jupytext_filetype_map = {'py': 'python'}
 '''
 
-[[plugins]]
-repo = 'github/copilot.vim'
-hook_add = '''
-  if glob('/proc/sys/fs/binfmt_misc/WSLInterop') != ''
-    let g:copilot_proxy_strict_ssl = v:false
-    let g:copilot_proxy = '192.168.109.170:8080'
-  endif
-'''
+#[[plugins]]
+# repo = 'github/copilot.vim'
+# hook_add = '''
+#   if glob('/proc/sys/fs/binfmt_misc/WSLInterop') != ''
+#     let g:copilot_proxy_strict_ssl = v:false
+#     let g:copilot_proxy = '192.168.109.170:8080'
+#   endif
+# '''
 
