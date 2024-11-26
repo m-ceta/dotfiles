@@ -1,6 +1,0 @@
-#!/bin/bash
-if [ -f /proc/sys/fs/binfmt_misc/WSLInterop ]; then
-  /mnt/c/Program\ Files/AutoHotKey/AutoHotkeyU64.exe "C:\tools\AutoHotKey\ImDisable.ahk"
-else
-  fcitx-remote -c
-fi
