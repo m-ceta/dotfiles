@@ -1,0 +1,5 @@
+{
+  "http.proxy": "http://192.168.109.170:8080",
+  "https.proxy": "http://192.168.109.170:8080",
+  "explorer.file.showHiddenFiles": true
+}

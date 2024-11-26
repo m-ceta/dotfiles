@@ -6,17 +6,6 @@ function CreateNewFile()
   endif
 endfunction
 
-function CreateNewRustProject()
-  let f = input("Project(dir=" . getcwd() . "): ")
-  let cmd = "cargo new " . f . " --bin"
-  if strlen(f) > 0
-    call system(cmd)
-    execute "tabe ". f . "/src/main.rs"
-    execute "tabe ". f . "/Cargo.toml"
-  endif
-endfunction
-
-
 " Define menu
 call quickui#menu#reset()
 call quickui#menu#install("&File", [
@@ -24,7 +13,6 @@ call quickui#menu#install("&File", [
                         \ ["&Save All\twa", 'wa!'],
                         \ [ "--", '' ],
                         \ ["&Create New File", 'call CreateNewFile()'],
-                        \ ["&Create New Rust Project", 'call CreateNewRustProject()'],
                         \ [ "--", '' ],
                         \ ["&Quit\tqa", 'qa!'],
                         \ ])
@@ -73,20 +61,6 @@ call quickui#menu#install("&Debug", [
                         \ ["---", ''],
                         \ ["&Breakpoint\t(F9)", 'call vimspector#ToggleBreakpoint()'],
                         \ ], '<auto>', 'rust,python')
-call quickui#menu#install("&Rust", [
-                        \ ["&Run\t(F7)", 'echo system("cargo run")'],
-                        \ ["&Check\tShift+(F7)", 'echo system("cargo check")'],
-                        \ [ "--", '' ],
-                        \ ["&Build\t(F8)", 'echo system("cargo build")'],
-                        \ ["Build &Release\tShift+(F8)", 'echo system("cargo build --release")'],
-                        \ ], '<auto>', 'rust')
-call quickui#menu#install("&Python", [
-                        \ ["Send &cell to ipython\t(leader)pc", 'SendCellToIPython'],
-                        \ ["Send &region to ipython\t(leader)pr", 'SendRegionToIPython'],
-                        \ ["Send &all to ipython\t(leader)pa", 'SendAllToIPython'],
-                        \ ["---", ''],
-                        \ ["Start &ipython\t(leader)ps", 'StartIPython'],
-                        \ ], '<auto>', 'python')
 call quickui#menu#install("&Git", [
                         \ ['&Add', 'Git add %'],
                         \ ['&Commit', 'Git commit'],
@@ -102,8 +76,6 @@ call quickui#menu#install("&Git", [
                         \ ['B&ranch', 'Git branch'],
                         \ ['C&heckout', 'Git checkout'],
                         \ ['&Merge', 'Git merge'],
-                        \ [ "--", '' ],
-                        \ ['&Yank m-ceta pashphrase', 'let @+ = trim(system("sh ~/dotfiles/scripts/viewtoken.sh"))'],
                         \ ])
 call quickui#menu#install("&Option", [
                         \ ['Set &Spell %{&spell? "Off":"On"}', 'set spell!'],
