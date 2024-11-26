@@ -123,6 +123,12 @@ hook_add = '''
   let g:jupytext_filetype_map = {'py': 'python'}
 '''
 
+[[plugins]]
+repo = 'petertriho/nvim-scrollbar'
+hook_add = '''
+  lua require("scrollbar").setup()
+'''
+
 #[[plugins]]
 # repo = 'github/copilot.vim'
 # hook_add = '''

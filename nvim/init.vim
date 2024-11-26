@@ -70,16 +70,26 @@ nnoremap <silent> <leader>ps :StartIPython<CR>
 tnoremap <silent> <leader>ps <C-\><C-n>:q<CR>
 
 " IM OFF command
-if has('win32')
-  augroup InsertHook
-    autocmd!
-    autocmd InsertLeave * :call system('%HOMEPATH%\dotfiles\scripts\imeoff.bat')
+if exists("g:neovide")
+
+  set linespace=0
+  let g:neovide_padding_top = 2
+  let g:neovide_padding_bottom = 2
+  let g:neovide_padding_right = 5
+  let g:neovide_padding_left = 5
+  let g:neovide_transparency = 0.95
+  let g:neovide_remember_window_size = v:true
+  let g:neovide_cursor_antialiasing = v:true
+  let g:neovide_cursor_vfx_mode = "railgun"
+
+  augroup ime_input
+      autocmd!
+      autocmd InsertLeave * execute "let g:neovide_input_ime=v:false"
+      autocmd InsertEnter * execute "let g:neovide_input_ime=v:true"
+      autocmd CmdlineLeave [/\?] execute "let g:neovide_input_ime=v:false"
+      autocmd CmdlineEnter [/\?] execute "let g:neovide_input_ime=v:true"
   augroup END
-else
-  augroup InsertHook
-    autocmd!
-    autocmd InsertLeave * :call system('~/dotfiles/scripts/imeoff')
-  augroup END
+
 endif
 
 "" Dein
