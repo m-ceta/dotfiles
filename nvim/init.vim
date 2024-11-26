@@ -62,8 +62,8 @@ nnoremap <silent> <C-h> :tabp<CR>
 nnoremap <silent> <C-a> :tab<Space>ba<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
-nmap <Leader>n :CocCommand explorer<CR>
-nmap <Leader>o :CocCommand explorer --sources=buffer+,file+ --position floating<CR>
+nmap <Leader>n :CocCommand explorer ~<CR>
+nmap <Leader>o :CocCommand explorer --sources=buffer+,file+ --position floating ~<CR>
 nnoremap <silent> <leader>ps :StartIPython<CR>
 tnoremap <silent> <leader>ps <C-\><C-n>:q<CR>
 
