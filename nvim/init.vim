@@ -60,14 +60,18 @@ tnoremap <silent> <C-[> <C-\><C-n>
 nnoremap <silent> <C-l> :tabn<CR>
 nnoremap <silent> <C-h> :tabp<CR>
 nnoremap <silent> <C-a> :tab<Space>ba<CR>
-nnoremap <silent> <C-t> :ReuseTerm<CR>
-tnoremap <silent> <C-t> <C-\><C-n>:q<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
 nmap <Leader>n :CocCommand explorer<CR>
 nmap <Leader>o :CocCommand explorer --sources=buffer+,file+ --position floating<CR>
 nnoremap <silent> <leader>ps :StartIPython<CR>
 tnoremap <silent> <leader>ps <C-\><C-n>:q<CR>
+
+" Toggle Terminal
+autocmd TermEnter term://*toggleterm#*
+      \ tnoremap <silent><c-t> <Cmd>exe v:count1 . "ToggleTerm"<CR>
+nnoremap <silent><c-t> <Cmd>exe v:count1 . "ToggleTerm"<CR>
+inoremap <silent><c-t> <Esc><Cmd>exe v:count1 . "ToggleTerm"<CR>
 
 " IM OFF command
 if exists("g:neovide")
@@ -82,17 +86,22 @@ if exists("g:neovide")
   let g:neovide_cursor_antialiasing = v:true
   let g:neovide_cursor_vfx_mode = "railgun"
 
+  augroup start_nvim
+    autocmd!
+    autocmd VimEnter * execute ":cd ~"
+  augroup END
+
   augroup ime_input
-      autocmd!
-      autocmd InsertLeave * execute "let g:neovide_input_ime=v:false"
-      autocmd InsertEnter * execute "let g:neovide_input_ime=v:true"
-      autocmd CmdlineLeave [/\?] execute "let g:neovide_input_ime=v:false"
-      autocmd CmdlineEnter [/\?] execute "let g:neovide_input_ime=v:true"
+    autocmd!
+    autocmd InsertLeave * execute "let g:neovide_input_ime=v:false"
+    autocmd InsertEnter * execute "let g:neovide_input_ime=v:true"
+    autocmd CmdlineLeave [/\?] execute "let g:neovide_input_ime=v:false"
+    autocmd CmdlineEnter [/\?] execute "let g:neovide_input_ime=v:true"
   augroup END
 
 endif
 
-"" Dein
+"" 
 let s:cache_home = empty($XDG_CACHE_HOME) ? expand('~/.cache') : $XDG_CACHE_HOME
 let s:dein_dir = s:cache_home . '/dein'
 let s:dein_repo_dir = s:dein_dir . '/repos/github.com/Shougo/dein.vim'

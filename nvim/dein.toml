@@ -109,3 +109,9 @@ repo = 'petertriho/nvim-scrollbar'
 hook_add = '''
   lua require("scrollbar").setup()
 '''
+
+[[plugins]]
+repo = 'akinsho/toggleterm.nvim'
+hook_add = '''
+  lua require("toggleterm").setup()
+'''
