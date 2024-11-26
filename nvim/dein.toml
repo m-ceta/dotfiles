@@ -12,18 +12,6 @@ hook_add = '''
 '''
 
 [[plugins]]
-repo = 'Shougo/denite.nvim'
-hook_add = '''
-  source ~/.config/nvim/plugins/denite.vim
-'''
-
-[[plugins]]
-repo = 'Shougo/neomru.vim'
-
-[[plugins]]
-repo = 'Shougo/neoyank.vim'
-
-[[plugins]]
 repo = 'osyo-manga/vim-anzu'
 hook_add = '''
   source ~/.config/nvim/plugins/anzu.vim
@@ -117,24 +105,7 @@ repo = 'airblade/vim-gitgutter'
 repo = 'tpope/vim-fugitive'
 
 [[plugins]]
-repo = 'goerz/jupytext.vim'
-hook_add = '''
-  let g:jupytext_fmt = 'py:percent'
-  let g:jupytext_filetype_map = {'py': 'python'}
-'''
-
-[[plugins]]
 repo = 'petertriho/nvim-scrollbar'
 hook_add = '''
   lua require("scrollbar").setup()
 '''
-
-#[[plugins]]
-# repo = 'github/copilot.vim'
-# hook_add = '''
-#   if glob('/proc/sys/fs/binfmt_misc/WSLInterop') != ''
-#     let g:copilot_proxy_strict_ssl = v:false
-#     let g:copilot_proxy = '192.168.109.170:8080'
-#   endif
-# '''
-
