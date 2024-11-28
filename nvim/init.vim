@@ -37,10 +37,6 @@ set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
 if has('unix')
   set sh=bash
-else 
-  if executable('sh')
-    set sh=sh
-  endif
 endif
 set mouse=a
 if exists('g:GuiLoaded')
