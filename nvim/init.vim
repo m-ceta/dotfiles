@@ -37,6 +37,10 @@ set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
 if has('unix')
   set sh=bash
+else 
+  if executable('sh')
+    set sh=sh
+  endif
 endif
 set mouse=a
 if exists('g:GuiLoaded')
@@ -57,15 +61,12 @@ nnoremap <silent> <leader>H :<C-u>sp<CR>
 nnoremap <silent> <leader>V :<C-u>vs<CR>
 tnoremap <silent> <ESC> <C-\><C-n>
 tnoremap <silent> <C-[> <C-\><C-n>
-nnoremap <silent> <C-l> :tabn<CR>
-nnoremap <silent> <C-h> :tabp<CR>
-nnoremap <silent> <C-a> :tab<Space>ba<CR>
+nnoremap <silent> <C-l> :bprev<CR>
+nnoremap <silent> <C-h> :bnext<CR>
 nnoremap <silent> <F4> :Cheat<CR>
 noremap! <S-Insert> <C-R>+
 nmap <Leader>n :CocCommand explorer ~<CR>
 nmap <Leader>o :CocCommand explorer --sources=buffer+,file+ --position floating ~<CR>
-nnoremap <silent> <leader>ps :StartIPython<CR>
-tnoremap <silent> <leader>ps <C-\><C-n>:q<CR>
 
 " Toggle Terminal
 autocmd TermEnter term://*toggleterm#*
