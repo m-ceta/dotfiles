@@ -30,26 +30,49 @@ set laststatus=2
 set ruler
 set number
 set numberwidth=5
-set showtabline=2
+"set showtabline=2
 set autoindent
 set cursorline
 set clipboard=unnamed
 set autochdir
 set list listchars=tab:\▸\-
-set pastetoggle=<F3>
 set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
 if has('unix')
   set sh=bash
 endif
 set mouse=a
+
 if exists('g:GuiLoaded')
-  GuiTabline 0
+  GuiTabline 1
   GuiPopupmenu 0
   GuiFont! ＭＳ\ ゴシック:h14
   GuiScrollBar 1
 else
   set guifont=ＭＳ\ ゴシック:h14
-  set guioptions+=r
+endif
+if exists("g:neovide")
+  set linespace=0
+  let g:neovide_padding_top = 2
+  let g:neovide_padding_bottom = 2
+  let g:neovide_padding_right = 5
+  let g:neovide_padding_left = 5
+  let g:neovide_opacity = 0.95
+  let g:neovide_remember_window_size = v:true
+  let g:neovide_cursor_antialiasing = v:true
+  let g:neovide_cursor_vfx_mode = "railgun"
+
+  augroup start_nvim
+    autocmd!
+    autocmd VimEnter * execute ":cd ~"
+  augroup END
+
+  augroup ime_input
+    autocmd!
+    autocmd InsertLeave * execute "let g:neovide_input_ime=v:false"
+    autocmd InsertEnter * execute "let g:neovide_input_ime=v:true"
+    autocmd CmdlineLeave [/\?] execute "let g:neovide_input_ime=v:false"
+    autocmd CmdlineEnter [/\?] execute "let g:neovide_input_ime=v:true"
+  augroup END
 endif
 
 "" Key
@@ -72,34 +95,6 @@ autocmd TermEnter term://*toggleterm#*
       \ tnoremap <silent><c-t> <Cmd>exe v:count1 . "ToggleTerm"<CR>
 nnoremap <silent><c-t> <Cmd>exe v:count1 . "ToggleTerm"<CR>
 inoremap <silent><c-t> <Esc><Cmd>exe v:count1 . "ToggleTerm"<CR>
-
-" IM OFF command
-if exists("g:neovide")
-
-  set linespace=0
-  let g:neovide_padding_top = 2
-  let g:neovide_padding_bottom = 2
-  let g:neovide_padding_right = 5
-  let g:neovide_padding_left = 5
-  let g:neovide_transparency = 0.95
-  let g:neovide_remember_window_size = v:true
-  let g:neovide_cursor_antialiasing = v:true
-  let g:neovide_cursor_vfx_mode = "railgun"
-
-  augroup start_nvim
-    autocmd!
-    autocmd VimEnter * execute ":cd ~"
-  augroup END
-
-  augroup ime_input
-    autocmd!
-    autocmd InsertLeave * execute "let g:neovide_input_ime=v:false"
-    autocmd InsertEnter * execute "let g:neovide_input_ime=v:true"
-    autocmd CmdlineLeave [/\?] execute "let g:neovide_input_ime=v:false"
-    autocmd CmdlineEnter [/\?] execute "let g:neovide_input_ime=v:true"
-  augroup END
-
-endif
 
 "" 
 let s:cache_home = empty($XDG_CACHE_HOME) ? expand('~/.cache') : $XDG_CACHE_HOME
